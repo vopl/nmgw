@@ -1,0 +1,3 @@
+[submodule "asio2"]
+	path = asio2
+	url = https://github.com/zhllxt/asio2.git
