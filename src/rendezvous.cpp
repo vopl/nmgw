@@ -2,7 +2,6 @@
 #include <asio2/rpc/rpcs_server.hpp>
 #include <logger.hpp>
 #include <filesystem>
-#include <iostream>
 
 namespace fs = std::filesystem;
 
@@ -39,10 +38,12 @@ int main(int argc, char* argv[])
 
     // use file for cert
     server.set_cert_file(
-        "../../example/cert/ca.crt",
-        "../../example/cert/server.crt",
-        "../../example/cert/server.key",
+        "../etc/ca.crt",
+        "../etc/server.crt",
+        "../etc/server.key",
         "123456");
+    server.set_dh_file("../etc/dh2048.pem");
+    server.set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
 
     if (asio2::get_last_error())
         LOGE("load cert files failed: " << asio2::get_last_error());

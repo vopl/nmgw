@@ -15,7 +15,7 @@ file(GLOB_RECURSE ASIO2_HEADERS
     asio2/include/**/*.h)
 add_library(asio2 STATIC ${ASIO2_HEADERS})
 set_target_properties(asio2 PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(asio2 INTERFACE asio2/3rd asio2/include)
+target_include_directories(asio2 SYSTEM BEFORE INTERFACE asio2/3rd asio2/include)
 target_compile_definitions(asio2 INTERFACE -DASIO2_USE_SSL=1)
 
 ########################################################################################
@@ -26,7 +26,7 @@ add_library(logger STATIC ${LOGGER_HEADERS} ${LOGGER_SOURCES})
 
 ########################################################################################
 add_executable(entrypoint src/entrypoint.cpp)
-target_link_libraries(entrypoint asio2)
+target_link_libraries(entrypoint logger asio2 -lssl -lcrypto)
 
 ########################################################################################
 add_executable(rendezvous src/rendezvous.cpp)
@@ -34,4 +34,4 @@ target_link_libraries(rendezvous logger asio2 -lssl -lcrypto)
 
 ########################################################################################
 add_executable(endpoint src/endpoint.cpp)
-target_link_libraries(endpoint asio2)
+target_link_libraries(endpoint logger asio2 -lssl -lcrypto)
