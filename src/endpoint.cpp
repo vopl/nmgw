@@ -76,6 +76,9 @@ int main(int argc, char* argv[])
 
     client.start_timer("timer_id1", std::chrono::milliseconds(500), [&]()
     {
+        if (!client.is_started())
+            return;
+
         std::string s1;
         s1 += '<';
         for (int i = 100 + std::rand() % (100); i > 0; i--)

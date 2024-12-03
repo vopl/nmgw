@@ -34,7 +34,10 @@ int main(int argc, char* argv[])
     std::string_view host = "0.0.0.0";
     std::string_view port = "8011";
 
-    asio2::rpcs_server server;
+    asio2::rpcs_server server/*(
+                asio2::detail::tcp_frame_size,
+                asio2::detail::max_buffer_size,
+                1)*/;
 
     // use file for cert
     server.set_cert_file(
