@@ -7,6 +7,8 @@
 #include "endpoint/rvzClient.hpp"
 #include "endpoint/socks5/server.hpp"
 #include "endpoint/guiGate.hpp"
+#include "endpoint/worker.hpp"
+#include <cstring>
 
 namespace ep = endpoint;
 namespace fs = std::filesystem;
@@ -182,6 +184,15 @@ int main(int argc, char* argv[])
         rvzClient.close(socks5Id);
     });
 
+    asio::signal_set signalset(ep::worker()->get_context());
+    signalset.add(SIGINT);
+    signalset.add(SIGTERM);
+    signalset.async_wait([&](const asio::error_code& ec, int signo)
+    {
+        LOGI("SIG"<<sigabbrev_np(signo)<<": "<<ec);
+        app.quit();
+    });
+
     targetRvzClient();
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -198,5 +209,8 @@ int main(int argc, char* argv[])
     );
     engine.load(url);
 
-    return app.exec();
+    ep::worker()->start();
+    int exitCode = app.exec();
+    ep::worker()->stop();
+    return exitCode;
 }
