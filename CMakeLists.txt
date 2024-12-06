@@ -26,12 +26,42 @@ add_library(logger STATIC ${LOGGER_HEADERS} ${LOGGER_SOURCES})
 
 ########################################################################################
 add_executable(entrypoint src/entrypoint.cpp)
-target_link_libraries(entrypoint logger asio2 -lssl -lcrypto)
+target_link_libraries(entrypoint PRIVATE logger asio2 -lssl -lcrypto)
 
 ########################################################################################
 add_executable(rendezvous src/rendezvous.cpp)
-target_link_libraries(rendezvous logger asio2 -lssl -lcrypto)
+target_link_libraries(rendezvous PRIVATE logger asio2 -lssl -lcrypto)
 
 ########################################################################################
-add_executable(endpoint src/endpoint.cpp)
-target_link_libraries(endpoint logger asio2 -lssl -lcrypto)
+find_package(Qt6 6.2 COMPONENTS Quick REQUIRED)
+qt_policy(SET QTP0004 NEW)
+qt_add_executable(endpoint
+    src/endpoint.cpp
+    src/endpoint/guiGate.hpp
+    src/endpoint/guiGate.cpp
+    src/endpoint/utils.hpp
+    src/endpoint/utils.cpp
+    src/endpoint/worker.hpp
+    src/endpoint/worker.cpp
+    src/endpoint/rvzClient.hpp
+    src/endpoint/rvzClient.cpp
+    src/endpoint/socks5/server.hpp
+    src/endpoint/socks5/server.cpp
+    src/endpoint/socks5/session.hpp
+    src/endpoint/socks5/session.cpp
+)
+set_target_properties(endpoint PROPERTIES AUTOMOC On)
+qt_add_qml_module(endpoint
+    URI endpoint
+    VERSION 1.0
+    NO_RESOURCE_TARGET_PATH
+    QML_FILES
+        src/endpoint/gui.qml
+    RESOURCES
+        etc/ca.crt
+        etc/client.crt
+        etc/client.key
+        etc/client.pswd
+        etc/dh2048.pem
+)
+target_link_libraries(endpoint PRIVATE logger asio2 -lssl -lcrypto Qt6::Quick)
