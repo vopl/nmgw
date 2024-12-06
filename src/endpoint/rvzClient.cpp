@@ -44,17 +44,11 @@ namespace endpoint
 
         _rpcsClient.bind("close", [this](int socks5Id)
         {
-            for(const auto& cb: _onClose)
+            for(const auto& cb: _onClosed)
                 cb(socks5Id);
         });
 
-        _rpcsClient.bind("close", [this](int socks5Id)
-        {
-            for(const auto& cb: _onClose)
-                cb(socks5Id);
-        });
-
-        _rpcsClient.bind("write", [&](int socks5Id, std::string data)
+        _rpcsClient.bind("traf", [&](int socks5Id, std::string data)
         {
             for(const auto& cb: _onInput)
                 cb(socks5Id, data);
@@ -102,9 +96,9 @@ namespace endpoint
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::onClose(std::function<void(int)> cb)
+    void RvzClient::onClosed(std::function<void(int)> cb)
     {
-        _onClose.emplace_back(std::move(cb));
+        _onClosed.emplace_back(std::move(cb));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -115,7 +109,7 @@ namespace endpoint
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::closed(int)
+    void RvzClient::close(int)
     {
         assert(!"not impl");
         // client.send("closed id")

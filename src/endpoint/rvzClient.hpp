@@ -17,10 +17,10 @@ namespace endpoint
 
         void onSocks5(std::function<int()>);
         void onInput(std::function<void(int, std::string)>);
-        void onClose(std::function<void(int)>);
+        void onClosed(std::function<void(int)>);
 
         void output(int, std::string);
-        void closed(int);
+        void close(int);
 
     private:
         asio2::rpcs_client _rpcsClient;
@@ -29,6 +29,6 @@ namespace endpoint
         std::vector<std::function<void()>>                  _onDisconnect;
         std::vector<std::function<int()>>                   _onSocks5;
         std::vector<std::function<void(int, std::string)>>  _onInput;
-        std::vector<std::function<void(int)>>               _onClose;
+        std::vector<std::function<void(int)>>               _onClosed;
     };
 }
