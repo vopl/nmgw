@@ -27,9 +27,12 @@ namespace endpoint::socks5
     void Server::stop()
     {
         _state.store(asio2::detail::state_t::stopping);
-        _sessionsMgr.for_each([](const SessionPtr& session)
+        _sessionsMgr.dispatch([this]
         {
-            session->stop();
+            _sessionsMgr.for_each([](const SessionPtr& session)
+            {
+                session->stop();
+            });
         });
 
         //assert(!"not impl");

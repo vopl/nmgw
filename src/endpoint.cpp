@@ -139,10 +139,10 @@ int main(int argc, char* argv[])
 
     rvzClient.onConnect([&]()
     {
-        if (asio2::get_last_error())
+        if (asio::error_code ec = asio2::get_last_error())
         {
             socks5Server.stop();
-            QMetaObject::invokeMethod(&guiGate, [&]{guiGate.setRendezvousConnectivity(QString{"err, %1"}.arg(QString::fromLocal8Bit(asio2::get_last_error().message())));});
+            QMetaObject::invokeMethod(&guiGate, [&, txt=QString::fromLocal8Bit(ec.message())]{guiGate.setRendezvousConnectivity(txt);});
             return;
         }
 
