@@ -28,6 +28,8 @@ int main(int argc, char* argv[])
         }
     }
 
+    rvz::worker()->start();
+
     rvz::Server rvzServer;
     rvzServer.start();
 
@@ -43,11 +45,10 @@ int main(int argc, char* argv[])
         sigPromise.set_value();
     });
 
-    rvz::worker()->start();
     sigFuture.wait();
-    rvz::worker()->stop();
-
     rvzServer.stop();
+
+    rvz::worker()->stop();
     LOGI("done");
     return 0;
 }

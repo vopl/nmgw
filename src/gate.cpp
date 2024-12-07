@@ -105,6 +105,8 @@ int main(int argc, char* argv[])
         }
     }
 
+    gate::worker()->start();
+
     QGuiApplication app(argc, argv);
     QCoreApplication::setOrganizationName("vopl");
     QCoreApplication::setOrganizationDomain("vopl");
@@ -203,7 +205,6 @@ int main(int argc, char* argv[])
     engine.load("qrc:/src/gate/gui.qml");
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    gate::worker()->start();
     int exitCode = app.exec();
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -211,8 +212,8 @@ int main(int argc, char* argv[])
     socks5Server.stop();
     asio::error_code ec;
     signalset.cancel(ec);
-    gate::worker()->stop();
 
+    gate::worker()->stop();
     LOGI("done");
     return exitCode;
 }

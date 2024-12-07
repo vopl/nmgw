@@ -22,17 +22,48 @@ target_include_directories(asio2 SYSTEM BEFORE INTERFACE asio2/3rd asio2/include
 target_compile_definitions(asio2 INTERFACE -DASIO2_USE_SSL=1)
 
 ########################################################################################
+find_package(Qt6 6.2 COMPONENTS Core Quick REQUIRED)
+qt_policy(SET QTP0004 NEW)
+
+########################################################################################
 include_directories(include)
 file(GLOB_RECURSE LOGGER_HEADERS include/logger.hpp include/logger/*)
 file(GLOB_RECURSE LOGGER_SOURCES src/logger.cpp src/logger/*)
 add_library(logger STATIC ${LOGGER_HEADERS} ${LOGGER_SOURCES})
 
 ########################################################################################
-add_executable(entrypoint src/entrypoint.cpp)
-target_link_libraries(entrypoint PRIVATE logger asio2 -lssl -lcrypto)
+qt_add_executable(entry
+    src/utils.hpp
+    src/utils.cpp
+    src/entry.cpp
+    src/entry/guiTalk.hpp
+    src/entry/guiTalk.cpp
+    src/entry/worker.hpp
+    src/entry/worker.cpp
+    src/entry/rvzClient.hpp
+    src/entry/rvzClient.cpp
+    src/entry/socks5/server.hpp
+    src/entry/socks5/server.cpp
+    src/entry/socks5/session.hpp
+    src/entry/socks5/session.cpp
+)
+set_target_properties(entry PROPERTIES AUTOMOC On)
+qt_add_qml_module(entry
+    URI entry
+    VERSION 1.0
+    NO_RESOURCE_TARGET_PATH
+    QML_FILES
+        src/entry/gui.qml
+    RESOURCES
+        etc/ca.crt
+        etc/client.crt
+        etc/client.key
+        etc/client.pswd
+        etc/dh2048.pem
+)
+target_link_libraries(entry PRIVATE logger asio2 -lssl -lcrypto Qt6::Quick)
 
 ########################################################################################
-find_package(Qt6 6.2 COMPONENTS Core REQUIRED)
 qt_add_executable(rendezvous
     src/utils.hpp
     src/utils.cpp
@@ -55,8 +86,6 @@ qt_add_resources(rendezvous "rendezvous"
 target_link_libraries(rendezvous PRIVATE logger asio2 -lssl -lcrypto Qt6::Core)
 
 ########################################################################################
-find_package(Qt6 6.2 COMPONENTS Quick REQUIRED)
-qt_policy(SET QTP0004 NEW)
 qt_add_executable(gate
     src/utils.hpp
     src/utils.cpp
