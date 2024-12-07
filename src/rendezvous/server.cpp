@@ -25,27 +25,27 @@ namespace rendezvous
 
         _rpcsServer.bind_start([&]()
         {
-            LOGI("rpcs server start: " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << ", " << asio2::get_last_error());
+            LOGI("rvz-server start: " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << ", " << asio2::get_last_error());
         });
 
         _rpcsServer.bind_stop([&]()
         {
-            LOGI("rpcs server stop: " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << ", " << asio2::get_last_error());
+            LOGI("rvz-server stop: " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << ", " << asio2::get_last_error());
         });
 
         _rpcsServer.bind_accept([this](const std::shared_ptr<asio2::rpcs_session>& session)
         {
-            LOGI("rpcs server accept: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+            LOGI("rvz-server accept: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
         });
 
         _rpcsServer.bind_connect([this](const std::shared_ptr<asio2::rpcs_session>& session)
         {
-            LOGI("rpcs server connect: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+            LOGI("rvz-server connect: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
         });
 
         _rpcsServer.bind_disconnect([this](const std::shared_ptr<asio2::rpcs_session>& session)
         {
-            LOGI("rpcs server disconnect: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+            LOGI("rvz-server disconnect: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
         });
 
         // _rpcsServer.bind("sock5", [this]

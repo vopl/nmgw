@@ -49,6 +49,7 @@ int main(int argc, char* argv[])
 
     entry::RvzClient rvzClient;
     entry::socks5::Server socks5Server;
+    socks5Server.setRvzClient(&rvzClient);
 
     auto startRvzClient = [&]
     {
@@ -86,32 +87,6 @@ int main(int argc, char* argv[])
         socks5Server.stop();
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("none");});
     });
-
-    // rvzClient.onSocks5([&]
-    // {
-    //     return (int)socks5Server.open()->key();
-    // });
-
-    // rvzClient.onClosed([&](int socks5Id)
-    // {
-    //     socks5Server.close(socks5Id);
-    // });
-
-    // rvzClient.onInput([&](int socks5Id, std::string data)
-    // {
-    //     if(!socks5Server.output(socks5Id, std::move(data)))
-    //         rvzClient.close(socks5Id);
-    // });
-
-    // socks5Server.onInput([&](int socks5Id, std::string data)
-    // {
-    //     rvzClient.output(socks5Id, std::move(data));
-    // });
-
-    // socks5Server.onClosed([&](int socks5Id)
-    // {
-    //     rvzClient.close(socks5Id);
-    // });
 
     startRvzClient();
 

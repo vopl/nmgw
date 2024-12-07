@@ -27,38 +27,26 @@ namespace entry
 
         _rpcsClient.bind_connect([this]
         {
-            LOGI("connect: " << asio2::get_last_error());
+            LOGI("rvz-client connect: " << asio2::get_last_error());
             for(const auto& cb: _onConnect)
                 cb();
         });
 
         _rpcsClient.bind_disconnect([this]
         {
-            LOGI("disconnect: " << asio2::get_last_error());
+            LOGI("rvz-client disconnect: " << asio2::get_last_error());
             for(const auto& cb: _onDisconnect)
                 cb();
         });
 
-        _rpcsClient.bind("sock5", [this]
+        _rpcsClient.bind("close", [this](int id)
         {
-            assert(_onSocks5.size() < 2);
-
-            int res = -1;
-            for(const auto& cb: _onSocks5)
-                res = cb();
-            return res;
+            activateOnClosed(id);
         });
 
-        _rpcsClient.bind("close", [this](int socks5Id)
+        _rpcsClient.bind("traf", [&](int id, std::string data)
         {
-            for(const auto& cb: _onClosed)
-                cb(socks5Id);
-        });
-
-        _rpcsClient.bind("traf", [&](int socks5Id, std::string data)
-        {
-            for(const auto& cb: _onInput)
-                cb(socks5Id, data);
+            activateOnInput(id, std::move(data));
         });
     }
 
@@ -97,34 +85,85 @@ namespace entry
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::onSocks5(std::function<int()> cb)
+    void RvzClient::socks5(std::function<void(int)> completition)
     {
-        _onSocks5.emplace_back(std::move(cb));
+        _rpcsClient.async_call([this, completition](int id)
+        {
+            if(const asio::error_code ec = asio2::get_last_error())
+            {
+                LOGI("rvz-client call socks5: " << ec);
+                activateOnClosed(id);
+                close(id);
+                return;
+            }
+            completition(id);
+        }, "socks5");
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::onInput(std::function<void(int, std::string)> cb)
+    void RvzClient::onInput(int id, std::function<void(std::string)> cb)
     {
-        _onInput.emplace_back(std::move(cb));
+        auto [iter, inserted] = _onInput.emplace(id, std::move(cb));
+        assert(inserted);
+        (void)iter;
+        (void)inserted;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::onClosed(std::function<void(int)> cb)
+    void RvzClient::onClosed(int id, std::function<void()> cb)
     {
-        _onClosed.emplace_back(std::move(cb));
+        auto [iter, inserted] = _onClosed.emplace(id, std::move(cb));
+        assert(inserted);
+        (void)iter;
+        (void)inserted;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::output(int, std::string)
+    void RvzClient::output(int id, std::string data)
     {
-        assert(!"not impl");
-        // client.send("write id data")
+        _rpcsClient.async_call([this, id]()
+        {
+            if(const asio::error_code ec = asio2::get_last_error())
+            {
+                LOGI("rvz-client call traf: " << ec);
+                activateOnClosed(id);
+                close(id);
+            }
+        }, "traf", id, std::move(data));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::close(int)
+    void RvzClient::close(int id)
     {
-        assert(!"not impl");
-        // client.send("closed id")
+        _onInput.erase(id);
+        _onClosed.erase(id);
+        _rpcsClient.async_call([this]()
+        {
+            if(const asio::error_code ec = asio2::get_last_error())
+                LOGI("rvz-client call close: " << ec);
+        }, "close", id);
     }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void RvzClient::activateOnInput(int id, std::string data)
+    {
+        auto iter = _onInput.find(id);
+        if(_onInput.end() == iter)
+            close(id);
+        else
+            iter->second(std::move(data));
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void RvzClient::activateOnClosed(int id)
+    {
+        auto iter = _onClosed.find(id);
+        if(_onClosed.end() != iter)
+        {
+            auto cb = std::move(iter->second);
+            _onClosed.erase(iter);
+            cb();
+        }
+    }
+
 }

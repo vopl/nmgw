@@ -1,12 +1,44 @@
 #include "server.hpp"
 #include "../worker.hpp"
+#include <logger.hpp>
 
 namespace entry::socks5
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Server::Server()
-        : asio2::tcp_server_impl_t<Server, Session>{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *worker()}
+        : Base{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *worker()}
     {
+        bind_start([&]()
+        {
+            LOGI("tcp-to-socks5 server start: " << listen_address() << ":" << listen_port() << ", " << asio2::get_last_error());
+        });
+
+        bind_stop([&]()
+        {
+            LOGI("tcp-to-socks5 server stop: " << listen_address() << ":" << listen_port() << ", " << asio2::get_last_error());
+        });
+
+        bind_accept([this](const std::shared_ptr<Session>& session)
+        {
+            LOGI("tcp-to-socks5 server accept: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+        });
+
+        bind_connect([this](const std::shared_ptr<Session>& session)
+        {
+            LOGI("tcp-to-socks5 server connect: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+            assert(_rvzClient);
+            session->setRvzClient(_rvzClient);
+        });
+
+        bind_disconnect([this](const std::shared_ptr<Session>& session)
+        {
+            LOGI("tcp-to-socks5 server disconnect: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+        });
+
+        bind_recv([this](const std::shared_ptr<Session>& session, std::string_view data)
+        {
+            session->output(data);
+        });
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -16,14 +48,21 @@ namespace entry::socks5
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Server::setRvzClient(RvzClient* rvzClient)
+    {
+        assert(!_rvzClient);
+        _rvzClient = rvzClient;
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::start()
     {
-        assert(!"not impl");
+        Base::start("0.0.0.0", 1080);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::stop()
     {
-        //assert(!"not impl");
+        Base::stop();
     }
 }

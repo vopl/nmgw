@@ -16,20 +16,26 @@ namespace entry
         void onConnect(std::function<void()>);
         void onDisconnect(std::function<void()>);
 
-        void onSocks5(std::function<int()>);
-        void onInput(std::function<void(int, std::string)>);
-        void onClosed(std::function<void(int)>);
+    public:
+        void socks5(std::function<void(int)>);
 
-        void output(int, std::string);
-        void close(int);
+        void onInput(int id, std::function<void(std::string)>);
+        void onClosed(int id, std::function<void()>);
+
+        void output(int id, std::string data);
+        void close(int id);
+
+    private:
+        void activateOnInput(int id, std::string data);
+        void activateOnClosed(int id);
 
     private:
         asio2::rpcs_client _rpcsClient;
 
         std::vector<std::function<void()>>                  _onConnect;
         std::vector<std::function<void()>>                  _onDisconnect;
-        std::vector<std::function<int()>>                   _onSocks5;
-        std::vector<std::function<void(int, std::string)>>  _onInput;
-        std::vector<std::function<void(int)>>               _onClosed;
+
+        std::map<int, std::function<void(std::string)>>     _onInput;
+        std::map<int, std::function<void()>>                _onClosed;
     };
 }

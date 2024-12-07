@@ -27,14 +27,14 @@ namespace gate
 
         _rpcsClient.bind_connect([this]
         {
-            LOGI("connect: " << asio2::get_last_error());
+            LOGI("rvz-client connect: " << asio2::get_last_error());
             for(const auto& cb: _onConnect)
                 cb();
         });
 
         _rpcsClient.bind_disconnect([this]
         {
-            LOGI("disconnect: " << asio2::get_last_error());
+            LOGI("rvz-client disconnect: " << asio2::get_last_error());
             for(const auto& cb: _onDisconnect)
                 cb();
         });

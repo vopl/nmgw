@@ -8,10 +8,13 @@ namespace entry::socks5
     class Server
         : public asio2::tcp_server_impl_t<Server, Session>
     {
+        using Base = asio2::tcp_server_impl_t<Server, Session>;
+
     public:
         Server();
         ~Server();
 
+        void setRvzClient(RvzClient* rvzClient);
         void start();
         void stop();
 
@@ -24,11 +27,6 @@ namespace entry::socks5
         // void onClosed(std::function<void(int)>);
 
     private:
-        // std::atomic<asio2::detail::state_t>     _state;
-        // asio2::detail::session_mgr_t<Session>   _sessionsMgr;
-        // asio2::detail::listener_t               _listener;
-
-        // std::vector<std::function<void(int, std::string)>>  _onInput;
-        // std::vector<std::function<void(int)>>               _onClosed;
+        RvzClient* _rvzClient{};
     };
 }
