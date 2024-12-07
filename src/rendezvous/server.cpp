@@ -48,27 +48,42 @@ namespace rendezvous
             LOGI("rvz-server disconnect: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
         });
 
-        // _rpcsServer.bind("sock5", [this]
-        // {
-        //     assert(_onSocks5.size() < 2);
+        _rpcsServer.bind("gate-intro", [this](const std::shared_ptr<asio2::rpcs_session>& session, std::string gateId)
+        {
+            assert(0);
+        });
 
-        //     int res = -1;
-        //     for(const auto& cb: _onSocks5)
-        //         res = cb();
-        //     return res;
-        // });
+        _rpcsServer.bind("entry-intro", [this](const std::shared_ptr<asio2::rpcs_session>& session, std::string entryId)
+        {
+            assert(0);
+        });
 
-        // _rpcsServer.bind("close", [this](int socks5Id)
-        // {
-        //     for(const auto& cb: _onClosed)
-        //         cb(socks5Id);
-        // });
+        _rpcsServer.bind("entry-get-gates", [this]
+        {
+            assert(0);
+            return std::vector<std::string>{};
+        });
 
-        // _rpcsServer.bind("traf", [&](int socks5Id, std::string data)
-        // {
-        //     for(const auto& cb: _onInput)
-        //         cb(socks5Id, data);
-        // });
+        _rpcsServer.bind("entry-sock5-open", [this](std::string gateId)
+        {
+            assert(0);
+            return 0;
+        });
+
+        _rpcsServer.bind("entry-sock5-close", [this](int socks5Id)
+        {
+            assert(0);
+        });
+
+        _rpcsServer.bind("entry-sock5-traf", [&](int socks5Id, std::string data)
+        {
+            assert(0);
+        });
+
+        _rpcsServer.bind("gate-sock5-traf", [&](int socks5Id, std::string data)
+        {
+            assert(0);
+        });
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

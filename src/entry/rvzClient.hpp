@@ -13,21 +13,21 @@ namespace entry
         void start(std::string_view host, std::string_view port);
         void stop();
 
-        void onConnect(std::function<void()>);
-        void onDisconnect(std::function<void()>);
+        void subscribeOnConnect(std::function<void()>);
+        void subscribeOnDisconnect(std::function<void()>);
 
     public:
-        void socks5(std::function<void(int)>);
+        void socks5Open(std::function<void(int)>);
 
-        void onInput(int id, std::function<void(std::string)>);
-        void onClosed(int id, std::function<void()>);
+        void subscribeOnSock5Input(int id, std::function<void(std::string)>);
+        void subscribeOnSock5Closed(int id, std::function<void()>);
 
-        void output(int id, std::string data);
-        void close(int id);
+        void sock5Output(int id, std::string data);
+        void sock5Close(int id);
 
     private:
-        void activateOnInput(int id, std::string data);
-        void activateOnClosed(int id);
+        void activateOnSock5Input(int id, std::string data);
+        void activateOnSock5Closed(int id);
 
     private:
         asio2::rpcs_client _rpcsClient;
@@ -35,7 +35,7 @@ namespace entry
         std::vector<std::function<void()>>                  _onConnect;
         std::vector<std::function<void()>>                  _onDisconnect;
 
-        std::map<int, std::function<void(std::string)>>     _onInput;
-        std::map<int, std::function<void()>>                _onClosed;
+        std::map<int, std::function<void(std::string)>>     _onSock5Input;
+        std::map<int, std::function<void()>>                _onSock5Closed;
     };
 }

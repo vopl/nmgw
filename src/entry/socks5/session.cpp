@@ -38,10 +38,10 @@ namespace entry::socks5
 
         while(!_output.empty())
         {
-            _rvzClient->output(_downstreamId, std::move(_output.front()));
+            _rvzClient->sock5Output(_downstreamId, std::move(_output.front()));
             _output.pop_front();
         }
-        _rvzClient->output(_downstreamId, std::string{data});
+        _rvzClient->sock5Output(_downstreamId, std::string{data});
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -58,17 +58,17 @@ namespace entry::socks5
         switch(_downStreamState)
         {
         case DownstreamState::null:
-            _rvzClient->socks5([this](int downstreamId)
+            _rvzClient->socks5Open([this](int downstreamId)
             {
                 _downstreamId = downstreamId;
                 _downStreamState = DownstreamState::work;
 
-                _rvzClient->onInput(_downstreamId, [this](std::string data)
+                _rvzClient->subscribeOnSock5Input(_downstreamId, [this](std::string data)
                 {
                     async_send(std::move(data));
                 });
 
-                _rvzClient->onClosed(_downstreamId, [this]()
+                _rvzClient->subscribeOnSock5Closed(_downstreamId, [this]
                 {
                     stop();
                 });

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <asio2/rpc/rpcs_server.hpp>
+#include <boost/multi_index_container.hpp>
 
 namespace rendezvous
 {
@@ -13,23 +14,28 @@ namespace rendezvous
         void start();
         void stop();
 
-        // void onConnect(std::function<void()>);
-        // void onDisconnect(std::function<void()>);
-
-        // void onSocks5(std::function<int()>);
-        // void onInput(std::function<void(int, std::string)>);
-        // void onClosed(std::function<void(int)>);
-
-        // void output(int, std::string);
-        // void close(int);
-
     private:
         asio2::rpcs_server _rpcsServer;
 
-        // std::vector<std::function<void()>>                  _onConnect;
-        // std::vector<std::function<void()>>                  _onDisconnect;
-        // std::vector<std::function<int()>>                   _onSocks5;
-        // std::vector<std::function<void(int, std::string)>>  _onInput;
-        // std::vector<std::function<void(int)>>               _onClosed;
+        struct Entry
+        {
+            asio2::rpcs_session _session;
+            std::string _id;
+        };
+
+        //boost::multi_index_container
+
+        struct Gate
+        {
+            asio2::rpcs_session _session;
+            std::string _id;
+        };
+
+        struct Sock5
+        {
+            asio2::rpcs_session _entrySession;
+            asio2::rpcs_session _gateSession;
+            int                 _sock5Id;
+        };
     };
 }

@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
     QObject::connect(&guiTalk, &entry::GuiTalk::rendezvousPortChanged, onRendezvousHostPortChanged);
 
 
-    rvzClient.onConnect([&]()
+    rvzClient.subscribeOnConnect([&]()
     {
         if (asio::error_code ec = asio2::get_last_error())
         {
@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("ok");});
     });
 
-    rvzClient.onDisconnect([&]
+    rvzClient.subscribeOnDisconnect([&]
     {
         socks5Server.stop();
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("none");});
