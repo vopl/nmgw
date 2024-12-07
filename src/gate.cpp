@@ -4,13 +4,12 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QSettings>
-#include "endpoint/rvzClient.hpp"
-#include "endpoint/socks5/server.hpp"
-#include "endpoint/guiGate.hpp"
-#include "endpoint/worker.hpp"
+#include "gate/rvzClient.hpp"
+#include "gate/socks5/server.hpp"
+#include "gate/guiTalk.hpp"
+#include "gate/worker.hpp"
 #include <cstring>
 
-namespace ep = endpoint;
 namespace fs = std::filesystem;
 
 
@@ -111,32 +110,32 @@ int main(int argc, char* argv[])
     QCoreApplication::setOrganizationDomain("vopl");
     QCoreApplication::setApplicationName("nmgw");
 
-    ep::GuiGate guiGate;
+    gate::GuiTalk guiTalk;
 
     QSettings settings;
 
-    guiGate.setRendezvousHost(settings.value("rendezvousHost", "127.0.0.1").toString());
-    guiGate.setRendezvousPort(settings.value("rendezvousPort", "28938").toString());
+    guiTalk.setRendezvousHost(settings.value("rendezvousHost", "127.0.0.1").toString());
+    guiTalk.setRendezvousPort(settings.value("rendezvousPort", "28938").toString());
 
-    ep::RvzClient rvzClient;
-    ep::socks5::Server socks5Server;
+    gate::RvzClient rvzClient;
+    gate::socks5::Server socks5Server;
 
     auto startRvzClient = [&]
     {
         rvzClient.start(
-                    guiGate.getRendezvousHost().toStdString(),
-                    guiGate.getRendezvousPort().toStdString());
+                    guiTalk.getRendezvousHost().toStdString(),
+                    guiTalk.getRendezvousPort().toStdString());
     };
 
     auto onRendezvousHostPortChanged = [&]
     {
-        settings.setValue("rendezvousHost", guiGate.getRendezvousHost());
-        settings.setValue("rendezvousPort", guiGate.getRendezvousPort());
+        settings.setValue("rendezvousHost", guiTalk.getRendezvousHost());
+        settings.setValue("rendezvousPort", guiTalk.getRendezvousPort());
         startRvzClient();
     };
 
-    QObject::connect(&guiGate, &ep::GuiGate::rendezvousHostChanged, onRendezvousHostPortChanged);
-    QObject::connect(&guiGate, &ep::GuiGate::rendezvousPortChanged, onRendezvousHostPortChanged);
+    QObject::connect(&guiTalk, &gate::GuiTalk::rendezvousHostChanged, onRendezvousHostPortChanged);
+    QObject::connect(&guiTalk, &gate::GuiTalk::rendezvousPortChanged, onRendezvousHostPortChanged);
 
 
     rvzClient.onConnect([&]()
@@ -144,18 +143,18 @@ int main(int argc, char* argv[])
         if (asio::error_code ec = asio2::get_last_error())
         {
             socks5Server.stop();
-            QMetaObject::invokeMethod(&guiGate, [&, txt=QString::fromLocal8Bit(ec.message())]{guiGate.setRendezvousConnectivity(txt);});
+            QMetaObject::invokeMethod(&guiTalk, [&, txt=QString::fromLocal8Bit(ec.message())]{guiTalk.setRendezvousConnectivity(txt);});
             return;
         }
 
         socks5Server.start();
-        QMetaObject::invokeMethod(&guiGate, [&]{guiGate.setRendezvousConnectivity("ok");});
+        QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("ok");});
     });
 
     rvzClient.onDisconnect([&]
     {
         socks5Server.stop();
-        QMetaObject::invokeMethod(&guiGate, [&]{guiGate.setRendezvousConnectivity("none");});
+        QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("none");});
     });
 
     rvzClient.onSocks5([&]
@@ -187,7 +186,7 @@ int main(int argc, char* argv[])
     startRvzClient();
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    asio::signal_set signalset(ep::worker()->get_context());
+    asio::signal_set signalset(gate::worker()->get_context());
     signalset.add(SIGINT);
     signalset.add(SIGTERM);
     signalset.async_wait([&](const asio::error_code& ec, int signo)
@@ -200,11 +199,11 @@ int main(int argc, char* argv[])
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("cppGate", &guiGate);
-    engine.load("qrc:/src/endpoint/gui.qml");
+    engine.rootContext()->setContextProperty("cppTalk", &guiTalk);
+    engine.load("qrc:/src/gate/gui.qml");
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    ep::worker()->start();
+    gate::worker()->start();
     int exitCode = app.exec();
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -212,7 +211,7 @@ int main(int argc, char* argv[])
     socks5Server.stop();
     asio::error_code ec;
     signalset.cancel(ec);
-    ep::worker()->stop();
+    gate::worker()->stop();
 
     LOGI("done");
     return exitCode;

@@ -57,28 +57,28 @@ target_link_libraries(rendezvous PRIVATE logger asio2 -lssl -lcrypto Qt6::Core)
 ########################################################################################
 find_package(Qt6 6.2 COMPONENTS Quick REQUIRED)
 qt_policy(SET QTP0004 NEW)
-qt_add_executable(endpoint
+qt_add_executable(gate
     src/utils.hpp
     src/utils.cpp
-    src/endpoint.cpp
-    src/endpoint/guiGate.hpp
-    src/endpoint/guiGate.cpp
-    src/endpoint/worker.hpp
-    src/endpoint/worker.cpp
-    src/endpoint/rvzClient.hpp
-    src/endpoint/rvzClient.cpp
-    src/endpoint/socks5/server.hpp
-    src/endpoint/socks5/server.cpp
-    src/endpoint/socks5/session.hpp
-    src/endpoint/socks5/session.cpp
+    src/gate.cpp
+    src/gate/guiTalk.hpp
+    src/gate/guiTalk.cpp
+    src/gate/worker.hpp
+    src/gate/worker.cpp
+    src/gate/rvzClient.hpp
+    src/gate/rvzClient.cpp
+    src/gate/socks5/server.hpp
+    src/gate/socks5/server.cpp
+    src/gate/socks5/session.hpp
+    src/gate/socks5/session.cpp
 )
-set_target_properties(endpoint PROPERTIES AUTOMOC On)
-qt_add_qml_module(endpoint
-    URI endpoint
+set_target_properties(gate PROPERTIES AUTOMOC On)
+qt_add_qml_module(gate
+    URI gate
     VERSION 1.0
     NO_RESOURCE_TARGET_PATH
     QML_FILES
-        src/endpoint/gui.qml
+        src/gate/gui.qml
     RESOURCES
         etc/ca.crt
         etc/client.crt
@@ -86,4 +86,4 @@ qt_add_qml_module(endpoint
         etc/client.pswd
         etc/dh2048.pem
 )
-target_link_libraries(endpoint PRIVATE logger asio2 -lssl -lcrypto Qt6::Quick)
+target_link_libraries(gate PRIVATE logger asio2 -lssl -lcrypto Qt6::Quick)

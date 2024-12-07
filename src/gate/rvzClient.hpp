@@ -2,7 +2,7 @@
 
 #include <asio2/rpc/rpcs_client.hpp>
 
-namespace endpoint
+namespace gate
 {
     class RvzClient
     {

@@ -1,32 +1,32 @@
-#include "guiGate.hpp"
+#include "guiTalk.hpp"
 #include <QCoreApplication>
 
-namespace endpoint
+namespace gate
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    GuiGate::GuiGate()
+    GuiTalk::GuiTalk()
     {
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    GuiGate::~GuiGate()
+    GuiTalk::~GuiTalk()
     {
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void GuiGate::closing()
+    void GuiTalk::closing()
     {
         QCoreApplication::quit();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    QString GuiGate::getRendezvousHost() const
+    QString GuiTalk::getRendezvousHost() const
     {
         return _rendezvousHost;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void GuiGate::setRendezvousHost(const QString& value)
+    void GuiTalk::setRendezvousHost(const QString& value)
     {
         if(_rendezvousHost != value)
         {
@@ -36,13 +36,13 @@ namespace endpoint
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    QString GuiGate::getRendezvousPort() const
+    QString GuiTalk::getRendezvousPort() const
     {
         return _rendezvousPort;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void GuiGate::setRendezvousPort(const QString& value)
+    void GuiTalk::setRendezvousPort(const QString& value)
     {
         if(_rendezvousPort != value)
         {
@@ -52,13 +52,13 @@ namespace endpoint
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    QString GuiGate::getRendezvousConnectivity() const
+    QString GuiTalk::getRendezvousConnectivity() const
     {
         return _rendezvousConnectivity;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void GuiGate::setRendezvousConnectivity(const QString& value)
+    void GuiTalk::setRendezvousConnectivity(const QString& value)
     {
         if(_rendezvousConnectivity != value)
         {

@@ -6,7 +6,7 @@ Window {
     width: 411
     height: 731
     visible: true
-    title: qsTr("nmgw endpoint")
+    title: qsTr("nmgw gate")
 
     ColumnLayout {
         anchors.fill: parent
@@ -15,23 +15,23 @@ Window {
          GridLayout {
              Layout.fillWidth: true
              columns: 2
-             Text { text: "renzvous IP:" } TextField { id: rendezvousHost; Layout.fillWidth: true; text: cppGate.rendezvousHost }
-             Text { text: "port:" }        TextField { id: rendezvousPort; Layout.fillWidth: true; text: cppGate.rendezvousPort }
+             Text { text: "renzvous IP:" } TextField { id: rendezvousHost; Layout.fillWidth: true; text: cppTalk.rendezvousHost }
+             Text { text: "port:" }        TextField { id: rendezvousPort; Layout.fillWidth: true; text: cppTalk.rendezvousPort }
          }
 
          Button {
              Layout.fillWidth: true
              text: "apply"
              onClicked: {
-                 cppGate.rendezvousHost = rendezvousHost.text
-                 cppGate.rendezvousPort = rendezvousPort.text
+                 cppTalk.rendezvousHost = rendezvousHost.text
+                 cppTalk.rendezvousPort = rendezvousPort.text
              }
          }
 
          GridLayout {
              Layout.fillWidth: true
              columns: 2
-             Text { text: "rendezvous connectivity:" } Label { Layout.fillWidth: true; text: cppGate.rendezvousConnectivity }
+             Text { text: "rendezvous connectivity:" } Label { Layout.fillWidth: true; text: cppTalk.rendezvousConnectivity }
              Text { text: "payload connections:" }   Label { Layout.fillWidth: true; text: "unknown" }
          }
 
@@ -41,14 +41,14 @@ Window {
     }
 
     Connections {
-        target: cppGate
+        target: cppTalk
         function onRendezvousHostChanged() {
-            rendezvousHost.text = cppGate.rendezvousHost
+            rendezvousHost.text = cppTalk.rendezvousHost
         }
         function onRendezvousPortChanged() {
-            rendezvousPort.text = cppGate.rendezvousHost
+            rendezvousPort.text = cppTalk.rendezvousHost
         }
     }
 
-    onClosing: cppGate.closing()
+    onClosing: cppTalk.closing()
 }

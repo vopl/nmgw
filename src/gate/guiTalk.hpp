@@ -1,9 +1,9 @@
 #pragma once
 #include <QObject>
 
-namespace endpoint
+namespace gate
 {
-    class GuiGate
+    class GuiTalk
         : public QObject
     {
         Q_OBJECT
@@ -12,8 +12,8 @@ namespace endpoint
         Q_PROPERTY(QString rendezvousConnectivity READ getRendezvousConnectivity WRITE setRendezvousConnectivity NOTIFY rendezvousConnectivityChanged FINAL)
 
     public:
-        GuiGate();
-        ~GuiGate();
+        GuiTalk();
+        ~GuiTalk();
 
     public:
         Q_INVOKABLE void closing();

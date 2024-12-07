@@ -3,7 +3,7 @@
 #include <logger.hpp>
 #include <cassert>
 
-namespace endpoint
+namespace gate
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     RvzClient::RvzClient()

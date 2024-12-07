@@ -2,7 +2,7 @@
 
 #include <asio2/proxy/socks5_session.hpp>
 
-namespace endpoint::socks5
+namespace gate::socks5
 {
     class Session
         : public asio2::socks5_session_t<Session>

@@ -3,7 +3,7 @@
 #include <asio2/proxy/socks5_server.hpp>
 #include "session.hpp"
 
-namespace endpoint::socks5
+namespace gate::socks5
 {
     class Server
     {

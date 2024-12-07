@@ -1,7 +1,7 @@
 #include "session.hpp"
 #include "../worker.hpp"
 
-namespace endpoint::socks5
+namespace gate::socks5
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Session::Session(asio2::detail::session_mgr_t<Session>& sessionMgr,

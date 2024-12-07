@@ -1,7 +1,7 @@
 #include "server.hpp"
 #include "../worker.hpp"
 
-namespace endpoint::socks5
+namespace gate::socks5
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Server::Server()
@@ -70,7 +70,7 @@ namespace endpoint::socks5
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     bool Server::output(Session::key_type sessionId, std::string data)
     {
-        endpoint::socks5::SessionPtr session = get(sessionId);
+        gate::socks5::SessionPtr session = get(sessionId);
         if(!session)
             return false;
         session->output(std::move(data));

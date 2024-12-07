@@ -1,6 +1,6 @@
 #include "worker.hpp"
 
-namespace endpoint
+namespace gate
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     std::shared_ptr<asio2::iopool> worker()
