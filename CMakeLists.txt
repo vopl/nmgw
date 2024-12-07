@@ -7,6 +7,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
+string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE_UC)
+add_compile_definitions(-DBUILD_TYPE_${BUILD_TYPE_UC}=1)
+
 ########################################################################################
 file(GLOB_RECURSE ASIO2_HEADERS
     asio2/3rd/**/*.hpp
@@ -29,18 +32,37 @@ add_executable(entrypoint src/entrypoint.cpp)
 target_link_libraries(entrypoint PRIVATE logger asio2 -lssl -lcrypto)
 
 ########################################################################################
-add_executable(rendezvous src/rendezvous.cpp)
-target_link_libraries(rendezvous PRIVATE logger asio2 -lssl -lcrypto)
+find_package(Qt6 6.2 COMPONENTS Core REQUIRED)
+qt_add_executable(rendezvous
+    src/utils.hpp
+    src/utils.cpp
+    src/rendezvous.cpp
+    src/rendezvous/worker.hpp
+    src/rendezvous/worker.cpp
+    src/rendezvous/server.hpp
+    src/rendezvous/server.cpp
+)
+set_target_properties(rendezvous PROPERTIES AUTOMOC On)
+qt_add_resources(rendezvous "rendezvous"
+    PREFIX "/"
+    FILES
+        etc/ca.crt
+        etc/server.crt
+        etc/server.key
+        etc/server.pswd
+        etc/dh2048.pem
+)
+target_link_libraries(rendezvous PRIVATE logger asio2 -lssl -lcrypto Qt6::Core)
 
 ########################################################################################
 find_package(Qt6 6.2 COMPONENTS Quick REQUIRED)
 qt_policy(SET QTP0004 NEW)
 qt_add_executable(endpoint
+    src/utils.hpp
+    src/utils.cpp
     src/endpoint.cpp
     src/endpoint/guiGate.hpp
     src/endpoint/guiGate.cpp
-    src/endpoint/utils.hpp
-    src/endpoint/utils.cpp
     src/endpoint/worker.hpp
     src/endpoint/worker.cpp
     src/endpoint/rvzClient.hpp

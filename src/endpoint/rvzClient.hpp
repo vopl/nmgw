@@ -10,7 +10,8 @@ namespace endpoint
         RvzClient();
         ~RvzClient();
 
-        void target(std::string_view host, std::string_view port);
+        void start(std::string_view host, std::string_view port);
+        void stop();
 
         void onConnect(std::function<void()>);
         void onDisconnect(std::function<void()>);

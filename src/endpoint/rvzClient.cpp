@@ -1,5 +1,5 @@
 #include "rvzClient.hpp"
-#include "utils.hpp"
+#include "../utils.hpp"
 #include <logger.hpp>
 #include <cassert>
 
@@ -16,7 +16,12 @@ namespace endpoint
                     utils::qtReadAllFile(":/etc/client.crt").toStdString(),
                     utils::qtReadAllFile(":/etc/client.key").toStdString(),
                     utils::qtReadAllFile(":/etc/client.pswd").toStdString());
+        if(const asio::error_code ec = asio2::get_last_error())
+            LOGE("set cert: " << ec);
+
         _rpcsClient.set_dh_buffer(utils::qtReadAllFile(":/etc/dh2048.pem").toStdString());
+        if(const asio::error_code ec = asio2::get_last_error())
+            LOGE("set dh params: " << ec);
 
         _rpcsClient.bind_connect([this]
         {
@@ -61,7 +66,7 @@ namespace endpoint
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::target(std::string_view host, std::string_view port)
+    void RvzClient::start(std::string_view host, std::string_view port)
     {
         if (_rpcsClient.get_host() != host || _rpcsClient.get_port() != port)
         {
@@ -69,6 +74,12 @@ namespace endpoint
             if(!host.empty() && !port.empty())
                 _rpcsClient.async_start(std::string{host}, std::string{port});
         }
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void RvzClient::stop()
+    {
+        _rpcsClient.stop();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

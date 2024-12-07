@@ -2,7 +2,7 @@
 #include <QFile>
 #include <logger.hpp>
 
-namespace endpoint::utils
+namespace utils
 {
     QByteArray qtReadAllFile(QString path)
     {

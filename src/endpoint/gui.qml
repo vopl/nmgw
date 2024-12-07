@@ -49,4 +49,6 @@ Window {
             rendezvousPort.text = cppGate.rendezvousHost
         }
     }
+
+    onClosing: cppGate.closing()
 }

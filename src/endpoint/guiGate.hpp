@@ -16,6 +16,9 @@ namespace endpoint
         ~GuiGate();
 
     public:
+        Q_INVOKABLE void closing();
+
+    public:
         QString getRendezvousHost() const;
         void setRendezvousHost(const QString& value);
 

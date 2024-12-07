@@ -116,14 +116,14 @@ int main(int argc, char* argv[])
     QSettings settings;
 
     guiGate.setRendezvousHost(settings.value("rendezvousHost", "127.0.0.1").toString());
-    guiGate.setRendezvousPort(settings.value("rendezvousPort", "8011").toString());
+    guiGate.setRendezvousPort(settings.value("rendezvousPort", "28938").toString());
 
     ep::RvzClient rvzClient;
     ep::socks5::Server socks5Server;
 
-    auto targetRvzClient = [&]
+    auto startRvzClient = [&]
     {
-        rvzClient.target(
+        rvzClient.start(
                     guiGate.getRendezvousHost().toStdString(),
                     guiGate.getRendezvousPort().toStdString());
     };
@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
     {
         settings.setValue("rendezvousHost", guiGate.getRendezvousHost());
         settings.setValue("rendezvousPort", guiGate.getRendezvousPort());
-        targetRvzClient();
+        startRvzClient();
     };
 
     QObject::connect(&guiGate, &ep::GuiGate::rendezvousHostChanged, onRendezvousHostPortChanged);
@@ -184,33 +184,36 @@ int main(int argc, char* argv[])
         rvzClient.close(socks5Id);
     });
 
+    startRvzClient();
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     asio::signal_set signalset(ep::worker()->get_context());
     signalset.add(SIGINT);
     signalset.add(SIGTERM);
     signalset.async_wait([&](const asio::error_code& ec, int signo)
     {
+        if (ec)
+            return;
         LOGI("SIG"<<sigabbrev_np(signo)<<": "<<ec);
         app.quit();
     });
 
-    targetRvzClient();
-
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("cppGate", &guiGate);
+    engine.load("qrc:/src/endpoint/gui.qml");
 
-    const QUrl url{"qrc:/src/endpoint/gui.qml"};
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl)
-                            {
-                                if (!obj && url == objUrl)
-                                    QCoreApplication::exit(-1);
-                            }, Qt::QueuedConnection
-    );
-    engine.load(url);
-
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     ep::worker()->start();
     int exitCode = app.exec();
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    rvzClient.stop();
+    socks5Server.stop();
+    asio::error_code ec;
+    signalset.cancel(ec);
     ep::worker()->stop();
+
+    LOGI("done");
     return exitCode;
 }

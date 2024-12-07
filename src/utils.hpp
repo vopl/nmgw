@@ -3,7 +3,7 @@
 #include <QString>
 #include <QByteArray>
 
-namespace endpoint::utils
+namespace utils
 {
     QByteArray qtReadAllFile(QString path);
 }
