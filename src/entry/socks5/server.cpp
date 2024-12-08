@@ -8,31 +8,36 @@ namespace entry::socks5
     Server::Server()
         : Base{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *utils::asio2Worker()}
     {
-        bind_start([&]()
+        bind_start([&]
         {
-            LOGI("tcp-to-socks5 server start: " << listen_address() << ":" << listen_port() << ", " << asio2::get_last_error());
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("tcp-to-socks5 server start: " << listen_address() << ":" << listen_port() << ", " << ec);
         });
 
-        bind_stop([&]()
+        bind_stop([&]
         {
-            LOGI("tcp-to-socks5 server stop: " << listen_address() << ":" << listen_port() << ", " << asio2::get_last_error());
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("tcp-to-socks5 server stop: " << listen_address() << ":" << listen_port() << ", " << ec);
         });
 
         bind_accept([this](const std::shared_ptr<Session>& session)
         {
-            LOGI("tcp-to-socks5 server accept: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("tcp-to-socks5 server accept: " << session->remote_address() << ":" << session->remote_port() << ", " << ec);
         });
 
         bind_connect([this](const std::shared_ptr<Session>& session)
         {
-            LOGI("tcp-to-socks5 server connect: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("tcp-to-socks5 server connect: " << session->remote_address() << ":" << session->remote_port() << ", " << ec);
             assert(_rvzClient);
             session->setRvzClient(_rvzClient);
         });
 
         bind_disconnect([this](const std::shared_ptr<Session>& session)
         {
-            LOGI("tcp-to-socks5 server disconnect: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("tcp-to-socks5 server disconnect: " << session->remote_address() << ":" << session->remote_port() << ", " << ec);
         });
 
         bind_recv([this](const std::shared_ptr<Session>& session, std::string_view data)

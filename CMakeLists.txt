@@ -62,24 +62,14 @@ qt_add_qml_module(entry
 target_link_libraries(entry PRIVATE logger asio2 -lssl -lcrypto Qt6::Quick)
 
 ########################################################################################
-qt_add_executable(rendezvous
+add_executable(rendezvous
     src/utils.hpp
     src/utils.cpp
     src/rendezvous.cpp
     src/rendezvous/server.hpp
     src/rendezvous/server.cpp
 )
-set_target_properties(rendezvous PROPERTIES AUTOMOC On)
-qt_add_resources(rendezvous "rendezvous"
-    PREFIX "/"
-    FILES
-        etc/ca.crt
-        etc/server.crt
-        etc/server.key
-        etc/server.pswd
-        etc/dh2048.pem
-)
-target_link_libraries(rendezvous PRIVATE logger asio2 -lssl -lcrypto Qt6::Core)
+target_link_libraries(rendezvous PRIVATE logger asio2 -lssl -lcrypto)
 
 ########################################################################################
 qt_add_executable(gate

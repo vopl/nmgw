@@ -36,7 +36,8 @@ namespace gate
 
             _rpcsClient.async_call([this]()
             {
-                LOGI("rvz-client call entry-intro: " << asio2::get_last_error());
+                asio::error_code ec = asio2::get_last_error();
+                LOGI("rvz-client call entry-intro: " << ec);
             }, "gate-intro", _gateId);
 
         });
@@ -44,7 +45,7 @@ namespace gate
         _rpcsClient.bind_disconnect([this]
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("rvz-client disconnect: " << asio2::get_last_error());
+            LOGI("rvz-client disconnect: " << ec);
             for(const auto& cb: _onDisconnect)
                 cb(ec);
         });

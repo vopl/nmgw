@@ -11,35 +11,39 @@ namespace rendezvous
     {
         _rpcsServer.set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
         _rpcsServer.set_cert_buffer(
-                    utils::qtReadAllFile(":/etc/ca.crt").toStdString(),
-                    utils::qtReadAllFile(":/etc/server.crt").toStdString(),
-                    utils::qtReadAllFile(":/etc/server.key").toStdString(),
-                    utils::qtReadAllFile(":/etc/server.pswd").toStdString());
+                    utils::readAllFile("../etc/ca.crt"),
+                    utils::readAllFile("../etc/server.crt"),
+                    utils::readAllFile("../etc/server.key"),
+                    utils::readAllFile("../etc/server.pswd"));
         if(const asio::error_code ec = asio2::get_last_error())
             LOGE("set cert: " << ec);
 
-        _rpcsServer.set_dh_buffer(utils::qtReadAllFile(":/etc/dh2048.pem").toStdString());
+        _rpcsServer.set_dh_buffer(utils::readAllFile("../etc/dh2048.pem"));
         if(const asio::error_code ec = asio2::get_last_error())
             LOGE("set dh params: " << ec);
 
-        _rpcsServer.bind_start([&]()
+        _rpcsServer.bind_start([&]
         {
-            LOGI("rvz-server start: " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << ", " << asio2::get_last_error());
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server start: " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << ", " << ec);
         });
 
-        _rpcsServer.bind_stop([&]()
+        _rpcsServer.bind_stop([&]
         {
-            LOGI("rvz-server stop: " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << ", " << asio2::get_last_error());
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server stop: " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << ", " << ec);
         });
 
         _rpcsServer.bind_accept([this](const SessionPtr& session)
         {
-            LOGI("rvz-server accept: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server accept: " << session->remote_address() << ":" << session->remote_port() << ", " << ec);
         });
 
         _rpcsServer.bind_connect([this](const SessionPtr& session)
         {
-            LOGI("rvz-server connect: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server connect: " << session->remote_address() << ":" << session->remote_port() << ", " << ec);
 
             Client client{};
             client._session = session;
@@ -48,7 +52,8 @@ namespace rendezvous
 
         _rpcsServer.bind_disconnect([this](const SessionPtr& session)
         {
-            LOGI("rvz-server disconnect: " << session->remote_address() << ":" << session->remote_port() << ", " << asio2::get_last_error());
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server disconnect: " << session->remote_address() << ":" << session->remote_port() << ", " << ec);
 
             auto& idx = _clients.get<ClientBySession>();
             auto iter = idx.find(session);
