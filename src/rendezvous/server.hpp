@@ -3,6 +3,7 @@
 #include <asio2/rpc/rpcs_server.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
+#include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 
@@ -50,26 +51,31 @@ namespace rendezvous
         Clients _clients;
 
     private:
-        struct Sock5
+        struct Socks5
         {
             SessionPtr  _entrySession;
             SessionPtr  _gateSession;
             int         _id{};
         };
 
-        using Sock5ByEntrySession = bmi::member<Sock5, SessionPtr, &Sock5::_entrySession>;
-        using Sock5ByGateSession  = bmi::member<Sock5, SessionPtr, &Sock5::_gateSession>;
-        using Sock5ById           = bmi::member<Sock5, int       , &Sock5::_id>;
+        using Socks5ByEntrySession = bmi::member<Socks5, SessionPtr, &Socks5::_entrySession>;
+        using Socks5ByGateSession  = bmi::member<Socks5, SessionPtr, &Socks5::_gateSession>;
+        using Socks5ById           = bmi::member<Socks5, int       , &Socks5::_id>;
+        using Socks5ByEntrySessionAndId = bmi::composite_key<Socks5, Socks5ByEntrySession, Socks5ById>;
+        using Socks5ByGateSessionAndId  = bmi::composite_key<Socks5, Socks5ByGateSession, Socks5ById>;
 
-        using Sock5s = bmi::multi_index_container<
-            Sock5,
+        using Socks5s = bmi::multi_index_container<
+            Socks5,
             bmi::indexed_by<
-                bmi::ordered_non_unique<bmi::tag<Sock5ByEntrySession>, Sock5ByEntrySession>,
-                bmi::ordered_non_unique<bmi::tag<Sock5ByGateSession >, Sock5ByGateSession >,
-                bmi::ordered_non_unique<bmi::tag<Sock5ById          >, Sock5ById          >
+                bmi::ordered_non_unique<bmi::tag<Socks5ByEntrySession>, Socks5ByEntrySession>,
+                bmi::ordered_non_unique<bmi::tag<Socks5ByGateSession >, Socks5ByGateSession >,
+                bmi::ordered_non_unique<bmi::tag<Socks5ById          >, Socks5ById          >,
+
+                bmi::ordered_non_unique<bmi::tag<Socks5ByEntrySessionAndId>, Socks5ByEntrySessionAndId>,
+                bmi::ordered_non_unique<bmi::tag<Socks5ByGateSessionAndId >, Socks5ByGateSessionAndId >
             >
         >;
 
-        Sock5s _sock5s;
+        Socks5s _socks5s;
     };
 }

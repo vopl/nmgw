@@ -3,6 +3,21 @@
 #include <logger.hpp>
 #include <cassert>
 
+namespace std
+{
+    template <class I>
+    I begin(const std::pair<I, I>& range)
+    {
+        return range.first;
+    }
+
+    template <class I>
+    I end(const std::pair<I, I>& range)
+    {
+        return range.second;
+    }
+}
+
 namespace rendezvous
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -55,14 +70,30 @@ namespace rendezvous
             asio::error_code ec = asio2::get_last_error();
             LOGI("rvz-server disconnect: " << session->remote_address() << ":" << session->remote_port() << ", " << ec);
 
-            auto& idx = _clients.get<ClientBySession>();
-            auto iter = idx.find(session);
-            if(idx.end() != iter)
             {
-                Client prev = *iter;
-                idx.erase(iter);
-                if(!prev._gateId.empty())
-                    distributeGateList();
+                auto& idx = _clients.get<ClientBySession>();
+                auto iter = idx.find(session);
+                if(idx.end() != iter)
+                {
+                    Client prev = *iter;
+                    idx.erase(iter);
+                    if(!prev._gateId.empty())
+                        distributeGateList();
+                }
+            }
+            {
+                auto& idx = _socks5s.get<Socks5ByEntrySession>();
+                auto range = idx.equal_range(session);
+                for(auto iter : range)
+                    iter._gateSession->async_call("socks5-close", iter._id);
+                idx.erase(range.first, range.second);
+            }
+            {
+                auto& idx = _socks5s.get<Socks5ByGateSession>();
+                auto range = idx.equal_range(session);
+                for(auto iter : range)
+                    iter._entrySession->async_call("socks5-close", iter._id);
+                idx.erase(range.first, range.second);
             }
         });
 
@@ -100,30 +131,68 @@ namespace rendezvous
                 distributeGateList(session);
         });
 
-        _rpcsServer.bind("entry-sock5-open", [this](const SessionPtr& session, std::string gateId)
+        _rpcsServer.bind("entry-socks5-open", [this](const SessionPtr& session, std::string gateId)
         {
-            assert(0);
-            return 0;
+            asio2::rpc::promise<int> resPromise;
+            asio2::rpc::future<int> resFuture = resPromise.get_future();
+
+            auto& idx = _clients.get<ClientByGateId>();
+            auto iter = idx.find(gateId);
+            if(idx.end() == iter)
+            {
+                resPromise.set_value(0);
+                return resFuture;
+            }
+
+            iter->_session->async_call([&, resPromise=std::move(resPromise)](int id) mutable {
+                asio::error_code ec = asio2::get_last_error();
+                if(ec)
+                    resPromise.set_value(0);
+                else
+                    resPromise.set_value(id);
+            }, "socks5-open");
+
+            return resFuture;
         });
 
-        _rpcsServer.bind("entry-sock5-close", [this](const SessionPtr& session, int socks5Id)
+        _rpcsServer.bind("entry-socks5-close", [this](const SessionPtr& session, int socks5Id)
         {
-            assert(0);
+            auto& idx = _socks5s.get<Socks5ByEntrySessionAndId>();
+            auto iter = idx.find(std::tuple{session, socks5Id});
+            if(idx.end() == iter)
+                return;
+
+            iter->_gateSession->async_call("socks5-open", socks5Id);
         });
 
-        _rpcsServer.bind("entry-sock5-traf", [&](const SessionPtr& session, int socks5Id, std::string data)
+        _rpcsServer.bind("entry-socks5-traf", [&](const SessionPtr& session, int socks5Id, std::string data)
         {
-            assert(0);
+            auto& idx = _socks5s.get<Socks5ByEntrySessionAndId>();
+            auto iter = idx.find(std::tuple{session, socks5Id});
+            if(idx.end() == iter)
+                return;
+
+            iter->_gateSession->async_call("socks5-traf", socks5Id, std::move(data));
         });
 
-        _rpcsServer.bind("gate-sock5-close", [&](const SessionPtr& session, int socks5Id)
+        _rpcsServer.bind("gate-socks5-close", [&](const SessionPtr& session, int socks5Id)
         {
-            assert(0);
+            auto& idx = _socks5s.get<Socks5ByGateSessionAndId>();
+            auto iter = idx.find(std::tuple{session, socks5Id});
+            if(idx.end() == iter)
+                return;
+
+            iter->_entrySession->async_call("socks5-close", socks5Id);
         });
 
-        _rpcsServer.bind("gate-sock5-traf", [&](const SessionPtr& session, int socks5Id, std::string data)
+        _rpcsServer.bind("gate-socks5-traf", [&](const SessionPtr& session, int socks5Id, std::string data)
         {
-            assert(0);
+            auto& idx = _socks5s.get<Socks5ByGateSessionAndId>();
+            auto iter = idx.find(std::tuple{session, socks5Id});
+            if(idx.end() == iter)
+                return;
+
+            iter->_entrySession->async_call("socks5-traf", socks5Id, std::move(data));
         });
     }
 

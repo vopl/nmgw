@@ -23,7 +23,9 @@ namespace entry::socks5
         ~Session();
 
         void setRvzClient(RvzClient* rvzClient);
-        void output(std::string_view data);
+        void setGateId(const std::string& gateId);
+        void processOutput(std::string_view data);
+        void processClose();
 
     private:
         void downstreamLogickTick();
@@ -39,6 +41,7 @@ namespace entry::socks5
 
     private:
         RvzClient*      _rvzClient{};
+        std::string     _gateId;
         DownstreamState _downStreamState{};
         int             _downstreamId{};
 

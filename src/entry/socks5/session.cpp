@@ -28,7 +28,25 @@ namespace entry::socks5
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Session::output(std::string_view data)
+    void Session::setGateId(const std::string& gateId)
+    {
+        if (_gateId != gateId)
+        {
+            if(_downstreamId)
+            {
+                _rvzClient->socks5Close(_downstreamId);
+                _downstreamId = {};
+            }
+            _downStreamState = {};
+            _output = {};
+
+            _gateId = gateId;
+            downstreamLogickTick();
+        }
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Session::processOutput(std::string_view data)
     {
         if(!downstreamWorks())
         {
@@ -38,16 +56,28 @@ namespace entry::socks5
 
         while(!_output.empty())
         {
-            _rvzClient->sock5Output(_downstreamId, std::move(_output.front()));
+            _rvzClient->socks5Output(_downstreamId, std::move(_output.front()));
             _output.pop_front();
         }
-        _rvzClient->sock5Output(_downstreamId, std::string{data});
+        _rvzClient->socks5Output(_downstreamId, std::string{data});
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Session::processClose()
+    {
+        if(_downstreamId)
+        {
+            _rvzClient->socks5Close(_downstreamId);
+            _downstreamId = {};
+        }
+        _downStreamState = {};
+        _output = {};
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Session::downstreamLogickTick()
     {
-        if(!_rvzClient)
+        if(!_rvzClient || _gateId.empty())
         {
             _downStreamState = {};
             _downstreamId = {};
@@ -58,17 +88,17 @@ namespace entry::socks5
         switch(_downStreamState)
         {
         case DownstreamState::null:
-            _rvzClient->socks5Open([this](int downstreamId)
+            _rvzClient->socks5Open(_gateId, [this](int downstreamId)
             {
                 _downstreamId = downstreamId;
                 _downStreamState = DownstreamState::work;
 
-                _rvzClient->subscribeOnSock5Input(_downstreamId, [this](std::string data)
+                _rvzClient->subscribeOnSocks5Input(_downstreamId, [this](std::string data)
                 {
                     async_send(std::move(data));
                 });
 
-                _rvzClient->subscribeOnSock5Closed(_downstreamId, [this]
+                _rvzClient->subscribeOnSocks5Closed(_downstreamId, [this]
                 {
                     stop();
                 });
@@ -87,7 +117,7 @@ namespace entry::socks5
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     bool Session::downstreamWorks() const
     {
-        return DownstreamState::work == _downStreamState;
+        return DownstreamState::work == _downStreamState && !!_downstreamId;
     }
 
 }

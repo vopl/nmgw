@@ -15,6 +15,7 @@ namespace entry::socks5
         ~Server();
 
         void setRvzClient(RvzClient* rvzClient);
+        void setGateId(const std::string& gateId);
         void start();
         void stop();
 
@@ -27,6 +28,7 @@ namespace entry::socks5
         // void onClosed(std::function<void(int)>);
 
     private:
-        RvzClient* _rvzClient{};
+        RvzClient*  _rvzClient{};
+        std::string _gateId;
     };
 }

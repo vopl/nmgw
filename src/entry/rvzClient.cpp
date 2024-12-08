@@ -55,14 +55,14 @@ namespace entry
                 cb(gateIds);
         });
 
-        _rpcsClient.bind("sock5-close", [this](int id)
+        _rpcsClient.bind("socks5-close", [this](int id)
         {
-            activateOnSock5Closed(id);
+            activateOnSocks5Closed(id);
         });
 
-        _rpcsClient.bind("sock5-traf", [&](int id, std::string data)
+        _rpcsClient.bind("socks5-traf", [&](int id, std::string data)
         {
-            activateOnSock5Input(id, std::move(data));
+            activateOnSocks5Input(id, std::move(data));
         });
     }
 
@@ -106,13 +106,6 @@ namespace entry
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::actualizeGate(std::string gateId)
-    {
-        if(_gateId != gateId)
-            _gateId = std::move(gateId);
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void RvzClient::start()
     {
         if(!_started)
@@ -152,85 +145,85 @@ namespace entry
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::socks5Open(std::function<void(int)> completition)
+    void RvzClient::socks5Open(const std::string& gateId, std::function<void(int)> completition)
     {
         _rpcsClient.async_call([this, completition](int id)
         {
             if(const asio::error_code ec = asio2::get_last_error())
             {
                 LOGI("rvz-client call entry-socks5-open: " << ec);
-                activateOnSock5Closed(id);
+                activateOnSocks5Closed(id);
                 close(id);
                 return;
             }
             completition(id);
-        }, "entry-socks5-open", "");//TODO: provide gate identifier
+        }, "entry-socks5-open", gateId);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::subscribeOnSock5Input(int id, std::function<void(std::string)> cb)
+    void RvzClient::subscribeOnSocks5Input(int id, std::function<void(std::string)> cb)
     {
-        auto [iter, inserted] = _onSock5Input.emplace(id, std::move(cb));
+        auto [iter, inserted] = _onSocks5Input.emplace(id, std::move(cb));
         assert(inserted);
         (void)iter;
         (void)inserted;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::subscribeOnSock5Closed(int id, std::function<void()> cb)
+    void RvzClient::subscribeOnSocks5Closed(int id, std::function<void()> cb)
     {
-        auto [iter, inserted] = _onSock5Closed.emplace(id, std::move(cb));
+        auto [iter, inserted] = _onSocks5Closed.emplace(id, std::move(cb));
         assert(inserted);
         (void)iter;
         (void)inserted;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::sock5Output(int id, std::string data)
+    void RvzClient::socks5Output(int id, std::string data)
     {
         _rpcsClient.async_call([this, id]()
         {
             if(const asio::error_code ec = asio2::get_last_error())
             {
-                LOGI("rvz-client call entry-sock5-traf: " << ec);
-                activateOnSock5Closed(id);
+                LOGI("rvz-client call entry-socks5-traf: " << ec);
+                activateOnSocks5Closed(id);
                 close(id);
             }
-        }, "entry-sock5-traf", id, std::move(data));
+        }, "entry-socks5-traf", id, std::move(data));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::sock5Close(int id)
+    void RvzClient::socks5Close(int id)
     {
-        _onSock5Input.erase(id);
-        _onSock5Closed.erase(id);
+        _onSocks5Input.erase(id);
+        _onSocks5Closed.erase(id);
         _rpcsClient.async_call([this]()
         {
             if(const asio::error_code ec = asio2::get_last_error())
-                LOGI("rvz-client call entry-sock5-close: " << ec);
-        }, "entry-sock5-close", id);
+                LOGI("rvz-client call entry-socks5-close: " << ec);
+        }, "entry-socks5-close", id);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::activateOnSock5Input(int id, std::string data)
+    void RvzClient::activateOnSocks5Input(int id, std::string data)
     {
-        auto iter = _onSock5Input.find(id);
-        if(_onSock5Input.end() == iter)
+        auto iter = _onSocks5Input.find(id);
+        if(_onSocks5Input.end() == iter)
             close(id);
         else
             iter->second(std::move(data));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::activateOnSock5Closed(int id)
+    void RvzClient::activateOnSocks5Closed(int id)
     {
-        _onSock5Input.erase(id);
+        _onSocks5Input.erase(id);
 
-        auto iter = _onSock5Closed.find(id);
-        if(_onSock5Closed.end() != iter)
+        auto iter = _onSocks5Closed.find(id);
+        if(_onSocks5Closed.end() != iter)
         {
             auto cb = std::move(iter->second);
-            _onSock5Closed.erase(iter);
+            _onSocks5Closed.erase(iter);
             cb();
         }
     }

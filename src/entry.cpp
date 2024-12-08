@@ -76,8 +76,8 @@ int main(int argc, char* argv[])
                                    gateId=settings.value("gateId").toString().toStdString()]
         {
             rvzClient.actualizeEntry(std::move(entryId));
-            rvzClient.actualizeGate(std::move(gateId));
             rvzClient.actualizeRendezvous(std::move(host), std::move(port));
+            socks5Server.setGateId(std::move(gateId));
         });
     };
     actualizeRvzClient();

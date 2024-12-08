@@ -50,7 +50,7 @@ namespace gate
                 cb(ec);
         });
 
-        _rpcsClient.bind("sock5-open", [this]
+        _rpcsClient.bind("socks5-open", [this]
         {
             assert(_onSocks5Open.size() < 2);
 
@@ -60,13 +60,13 @@ namespace gate
             return res;
         });
 
-        _rpcsClient.bind("sock5-close", [this](int id)
+        _rpcsClient.bind("socks5-close", [this](int id)
         {
             for(const auto& cb: _onSocks5Closed)
                 cb(id);
         });
 
-        _rpcsClient.bind("sock5-traf", [&](int id, std::string data)
+        _rpcsClient.bind("socks5-traf", [&](int id, std::string data)
         {
             for(const auto& cb: _onSocks5Input)
                 cb(id, data);
