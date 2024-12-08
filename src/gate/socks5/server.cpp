@@ -85,15 +85,14 @@ namespace gate::socks5
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Server::onInput(std::function<void(int, std::string)> cb)
+    void Server::subscribeOnInput(std::function<void(int, std::string)> cb)
     {
         _onInput.emplace_back(std::move(cb));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Server::onClosed(std::function<void(int)> cb)
+    void Server::subscribeOnClosed(std::function<void(int)> cb)
     {
         _onClosed.emplace_back(std::move(cb));
     }
-
 }

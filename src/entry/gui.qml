@@ -48,11 +48,17 @@ Window {
 
     Connections {
         target: cppTalk
+        function onEntryIdChanged() {
+            entryId.text = cppTalk.entryId
+        }
         function onRendezvousHostChanged() {
             rendezvousHost.text = cppTalk.rendezvousHost
         }
         function onRendezvousPortChanged() {
             rendezvousPort.text = cppTalk.rendezvousPort
+        }
+        function onGateIdChanged() {
+            gateId.text = cppTalk.gateId
         }
     }
 

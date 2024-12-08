@@ -20,6 +20,22 @@ namespace gate
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    QString GuiTalk::getGateId() const
+    {
+        return _gateId;
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void GuiTalk::setGateId(const QString& value)
+    {
+        if(_gateId != value)
+        {
+            _gateId = value;
+            gateIdChanged();
+        }
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     QString GuiTalk::getRendezvousHost() const
     {
         return _rendezvousHost;

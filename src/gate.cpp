@@ -4,6 +4,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QSettings>
+#include <QRandomGenerator>
 #include "gate/rvzClient.hpp"
 #include "gate/socks5/server.hpp"
 #include "gate/guiTalk.hpp"
@@ -44,30 +45,50 @@ int main(int argc, char* argv[])
 
     QSettings settings;
 
-    guiTalk.setRendezvousHost(settings.value("rendezvousHost", "127.0.0.1").toString());
-    guiTalk.setRendezvousPort(settings.value("rendezvousPort", "28938").toString());
+    if(settings.value("entryId").isNull())
+    {
+        QRandomGenerator gen{QRandomGenerator::securelySeeded()};
+        std::string value;
+        for(std::size_t i{}; i<32; ++i)
+            value += (char)gen.bounded('a', 'z');
+        settings.setValue("entryId", QString::fromLocal8Bit(value));
+    }
+    if(settings.value("rendezvousHost").isNull())
+        settings.setValue("rendezvousHost", "127.0.0.1");
+    if(settings.value("rendezvousPort").isNull())
+        settings.setValue("rendezvousPort", "28938");
+
+    guiTalk.setGateId(settings.value("gateId").toString());
+    guiTalk.setRendezvousHost(settings.value("rendezvousHost").toString());
+    guiTalk.setRendezvousPort(settings.value("rendezvousPort").toString());
 
     gate::RvzClient rvzClient;
     gate::socks5::Server socks5Server;
 
-    auto startRvzClient = [&]
+    auto actualizeRvzClient = [&]
     {
-        utils::asio2Worker()->post([&, host=guiTalk.getRendezvousHost().toStdString(), port=guiTalk.getRendezvousPort().toStdString()]
+        utils::asio2Worker()->post([&,
+                                   host=settings.value("rendezvousHost").toString().toStdString(),
+                                   port=settings.value("rendezvousPort").toString().toStdString(),
+                                   gateId=settings.value("gateId").toString().toStdString()]
         {
-            rvzClient.start(std::move(host), std::move(port));
+            rvzClient.actualizeGate(std::move(gateId));
+            rvzClient.actualizeRendezvous(std::move(host), std::move(port));
         });
     };
+    actualizeRvzClient();
 
     QObject::connect(&guiTalk, &gate::GuiTalk::applyStateRequested, [&]
     {
+        settings.setValue("gateId", guiTalk.getGateId());
         settings.setValue("rendezvousHost", guiTalk.getRendezvousHost());
         settings.setValue("rendezvousPort", guiTalk.getRendezvousPort());
-        startRvzClient();
+        actualizeRvzClient();
     });
 
-    rvzClient.onConnect([&]()
+    rvzClient.subscribeOnConnect([&](asio::error_code ec)
     {
-        if (asio::error_code ec = asio2::get_last_error())
+        if (ec)
         {
             socks5Server.stop();
             QMetaObject::invokeMethod(&guiTalk, [&, txt=QString::fromLocal8Bit(ec.message())]{guiTalk.setRendezvousConnectivity(txt);});
@@ -78,39 +99,39 @@ int main(int argc, char* argv[])
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("ok");});
     });
 
-    rvzClient.onDisconnect([&]
+    rvzClient.subscribeOnDisconnect([&](asio::error_code /*ec*/)
     {
         socks5Server.stop();
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("none");});
     });
 
-    rvzClient.onSocks5([&]
+    rvzClient.subscribeOnSocks5Open([&]
     {
         return (int)socks5Server.open()->key();
     });
 
-    rvzClient.onClosed([&](int socks5Id)
+    rvzClient.subscribeOnSocks5Closed([&](int socks5Id)
     {
         socks5Server.close(socks5Id);
     });
 
-    rvzClient.onInput([&](int socks5Id, std::string data)
+    rvzClient.subscribeOnSocks5Input([&](int socks5Id, std::string data)
     {
         if(!socks5Server.output(socks5Id, std::move(data)))
-            rvzClient.close(socks5Id);
+            rvzClient.socks5Close(socks5Id);
     });
 
-    socks5Server.onInput([&](int socks5Id, std::string data)
+    socks5Server.subscribeOnInput([&](int socks5Id, std::string data)
     {
-        rvzClient.output(socks5Id, std::move(data));
+        rvzClient.socks5Output(socks5Id, std::move(data));
     });
 
-    socks5Server.onClosed([&](int socks5Id)
+    socks5Server.subscribeOnClosed([&](int socks5Id)
     {
-        rvzClient.close(socks5Id);
+        rvzClient.socks5Close(socks5Id);
     });
 
-    startRvzClient();
+    rvzClient.start();
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     asio::signal_set signalset(utils::asio2Worker()->get_context());

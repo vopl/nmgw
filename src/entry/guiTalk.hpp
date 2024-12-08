@@ -44,7 +44,6 @@ namespace entry
         void rendezvousPortChanged();
         void rendezvousConnectivityChanged();
 
-
     private:
         QString _entryId;
         QString _gateId;

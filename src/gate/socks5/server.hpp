@@ -15,12 +15,12 @@ namespace gate::socks5
         void stop();
 
         SessionPtr open();
-        SessionPtr get(Session::key_type sessionId);
-        bool output(Session::key_type sessionId, std::string data);
-        void close(Session::key_type sessionId);
+        SessionPtr get(Session::key_type id);
+        bool output(Session::key_type id, std::string data);
+        void close(Session::key_type id);
 
-        void onInput(std::function<void(int, std::string)>);
-        void onClosed(std::function<void(int)>);
+        void subscribeOnInput(std::function<void(int, std::string)>);
+        void subscribeOnClosed(std::function<void(int)>);
 
     private:
         std::atomic<asio2::detail::state_t>     _state;

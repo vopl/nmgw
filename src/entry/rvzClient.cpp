@@ -38,14 +38,6 @@ namespace entry
             {
                 LOGI("rvz-client call entry-intro: " << asio2::get_last_error());
             }, "entry-intro", _entryId);
-
-            _rpcsClient.async_call([this](std::vector<std::string> geteIds)
-            {
-                LOGI("rvz-client call entry-get-gates: " << asio2::get_last_error());
-                for(const std::string& gateId : geteIds)
-                    LOGI("gateId: " << gateId);
-                //TODO:  store gate identifiers
-            }, "entry-get-gates");
         });
 
         _rpcsClient.bind_disconnect([this]
@@ -54,6 +46,13 @@ namespace entry
             LOGI("rvz-client disconnect: " << asio2::get_last_error());
             for(const auto& cb: _onDisconnect)
                 cb(ec);
+        });
+
+        _rpcsClient.bind("gate-list", [this](std::vector<std::string> gateIds)
+        {
+            for(const std::string& gateId : gateIds)
+                LOGI("gateId: " << gateId);
+            assert(0);
         });
 
         _rpcsClient.bind("sock5-close", [this](int id)
