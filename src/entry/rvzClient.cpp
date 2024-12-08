@@ -1,5 +1,4 @@
 #include "rvzClient.hpp"
-#include "worker.hpp"
 #include "../utils.hpp"
 #include <logger.hpp>
 #include <cassert>
@@ -8,7 +7,7 @@ namespace entry
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     RvzClient::RvzClient()
-        : _rpcsClient{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *worker()}
+        : _rpcsClient{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *utils::asio2Worker()}
     {
         _rpcsClient.set_default_timeout(std::chrono::seconds(5));
 

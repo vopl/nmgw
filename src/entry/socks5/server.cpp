@@ -1,12 +1,12 @@
 #include "server.hpp"
-#include "../worker.hpp"
+#include "../../utils.hpp"
 #include <logger.hpp>
 
 namespace entry::socks5
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Server::Server()
-        : Base{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *worker()}
+        : Base{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *utils::asio2Worker()}
     {
         bind_start([&]()
         {

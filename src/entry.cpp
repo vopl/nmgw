@@ -7,7 +7,7 @@
 #include "entry/rvzClient.hpp"
 #include "entry/socks5/server.hpp"
 #include "entry/guiTalk.hpp"
-#include "entry/worker.hpp"
+#include "utils.hpp"
 #include <cstring>
 
 namespace fs = std::filesystem;
@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    entry::worker()->start();
+    utils::asio2Worker()->start();
 
     QGuiApplication app(argc, argv);
     QCoreApplication::setOrganizationName("vopl");
@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
     startRvzClient();
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    asio::signal_set signalset(entry::worker()->get_context());
+    asio::signal_set signalset(utils::asio2Worker()->get_context());
     signalset.add(SIGINT);
     signalset.add(SIGTERM);
     signalset.async_wait([&](const asio::error_code& ec, int signo)
@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
     signalset.cancel(ec);
 
 
-    entry::worker()->stop();
+    utils::asio2Worker()->stop();
     LOGI("done");
     return exitCode;
 }

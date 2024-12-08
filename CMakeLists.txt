@@ -38,8 +38,6 @@ qt_add_executable(entry
     src/entry.cpp
     src/entry/guiTalk.hpp
     src/entry/guiTalk.cpp
-    src/entry/worker.hpp
-    src/entry/worker.cpp
     src/entry/rvzClient.hpp
     src/entry/rvzClient.cpp
     src/entry/socks5/server.hpp
@@ -68,8 +66,6 @@ qt_add_executable(rendezvous
     src/utils.hpp
     src/utils.cpp
     src/rendezvous.cpp
-    src/rendezvous/worker.hpp
-    src/rendezvous/worker.cpp
     src/rendezvous/server.hpp
     src/rendezvous/server.cpp
 )
@@ -92,8 +88,6 @@ qt_add_executable(gate
     src/gate.cpp
     src/gate/guiTalk.hpp
     src/gate/guiTalk.cpp
-    src/gate/worker.hpp
-    src/gate/worker.cpp
     src/gate/rvzClient.hpp
     src/gate/rvzClient.cpp
     src/gate/socks5/server.hpp

@@ -1,12 +1,12 @@
 #include "server.hpp"
-#include "../worker.hpp"
+#include "../../utils.hpp"
 
 namespace gate::socks5
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Server::Server()
         : _state{asio2::detail::state_t::stopped}
-        , _sessionsMgr{worker()->get(), _state}
+        , _sessionsMgr{utils::asio2Worker()->get(), _state}
         , _listener{}
     {
     }
@@ -50,7 +50,7 @@ namespace gate::socks5
         assert(!"not impl");
         // socks5IdGen++;
 
-        // Socks5Ptr socks5 = Socks5::create(worker()->get());
+        // Socks5Ptr socks5 = Socks5::create(utils::asio2Worker()->get());
         // socks5->_onRead = [socks5IdGen, &rvzClient](std::string input)
         // {
         //     rvzClient.output(socks5IdGen, std::move(input));

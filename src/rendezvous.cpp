@@ -1,6 +1,6 @@
 
-#include "rendezvous/worker.hpp"
 #include "rendezvous/server.hpp"
+#include "utils.hpp"
 #include <logger.hpp>
 #include <filesystem>
 
@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    rvz::worker()->start();
+    utils::asio2Worker()->start();
 
     rvz::Server rvzServer;
     rvzServer.start();
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     std::promise<void> sigPromise;
     std::future<void> sigFuture = sigPromise.get_future();
-    asio::signal_set signalset(rvz::worker()->get_context());
+    asio::signal_set signalset(utils::asio2Worker()->get_context());
     signalset.add(SIGINT);
     signalset.add(SIGTERM);
     signalset.async_wait([sigPromise = std::move(sigPromise)](const asio::error_code& ec, int signo) mutable
@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
     sigFuture.wait();
     rvzServer.stop();
 
-    rvz::worker()->stop();
+    utils::asio2Worker()->stop();
     LOGI("done");
     return 0;
 }

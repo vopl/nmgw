@@ -1,5 +1,4 @@
 #include "server.hpp"
-#include "worker.hpp"
 #include "../utils.hpp"
 #include <logger.hpp>
 #include <cassert>
@@ -8,7 +7,7 @@ namespace rendezvous
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Server::Server()
-        : _rpcsServer{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *worker()}
+        : _rpcsServer{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *utils::asio2Worker()}
     {
         _rpcsServer.set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
         _rpcsServer.set_cert_buffer(
@@ -102,48 +101,4 @@ namespace rendezvous
     {
         _rpcsServer.stop();
     }
-
-    // /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    // void RvzClient::onConnect(std::function<void()> cb)
-    // {
-    //     _onConnect.emplace_back(std::move(cb));
-    // }
-
-    // /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    // void RvzClient::onDisconnect(std::function<void()> cb)
-    // {
-    //     _onDisconnect.emplace_back(std::move(cb));
-    // }
-
-    // /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    // void RvzClient::onSocks5(std::function<int()> cb)
-    // {
-    //     _onSocks5.emplace_back(std::move(cb));
-    // }
-
-    // /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    // void RvzClient::onInput(std::function<void(int, std::string)> cb)
-    // {
-    //     _onInput.emplace_back(std::move(cb));
-    // }
-
-    // /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    // void RvzClient::onClosed(std::function<void(int)> cb)
-    // {
-    //     _onClosed.emplace_back(std::move(cb));
-    // }
-
-    // /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    // void RvzClient::output(int, std::string)
-    // {
-    //     assert(!"not impl");
-    //     // client.send("write id data")
-    // }
-
-    // /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    // void RvzClient::close(int)
-    // {
-    //     assert(!"not impl");
-    //     // client.send("closed id")
-    // }
 }
