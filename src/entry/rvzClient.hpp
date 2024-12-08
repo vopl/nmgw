@@ -10,11 +10,15 @@ namespace entry
         RvzClient();
         ~RvzClient();
 
-        void start(std::string_view host, std::string_view port);
+        void actualizeRendezvous(std::string host, std::string port);
+        void actualizeEntry(std::string entryId);
+        void actualizeGate(std::string gateId);
+
+        void start();
         void stop();
 
-        void subscribeOnConnect(std::function<void()>);
-        void subscribeOnDisconnect(std::function<void()>);
+        void subscribeOnConnect(std::function<void(asio::error_code)>);
+        void subscribeOnDisconnect(std::function<void(asio::error_code)>);
 
     public:
         void socks5Open(std::function<void(int)>);
@@ -31,9 +35,14 @@ namespace entry
 
     private:
         asio2::rpcs_client _rpcsClient;
+        bool        _started{};
+        std::string _rendezvousHost;
+        std::string _rendezvousPort;
+        std::string _entryId;
+        std::string _gateId;
 
-        std::vector<std::function<void()>>                  _onConnect;
-        std::vector<std::function<void()>>                  _onDisconnect;
+        std::vector<std::function<void(asio::error_code)>> _onConnect;
+        std::vector<std::function<void(asio::error_code)>> _onDisconnect;
 
         std::map<int, std::function<void(std::string)>>     _onSock5Input;
         std::map<int, std::function<void()>>                _onSock5Closed;

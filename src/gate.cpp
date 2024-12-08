@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
     QGuiApplication app(argc, argv);
     QCoreApplication::setOrganizationName("vopl");
     QCoreApplication::setOrganizationDomain("vopl");
-    QCoreApplication::setApplicationName("nmgw");
+    QCoreApplication::setApplicationName("nmgw-gate");
 
     gate::GuiTalk guiTalk;
 

@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     QGuiApplication app(argc, argv);
     QCoreApplication::setOrganizationName("vopl");
     QCoreApplication::setOrganizationDomain("vopl");
-    QCoreApplication::setApplicationName("nmgw");
+    QCoreApplication::setApplicationName("nmgw-entry");
 
     entry::GuiTalk guiTalk;
 
@@ -53,22 +53,34 @@ int main(int argc, char* argv[])
             value += (char)gen.bounded('a', 'z');
         settings.setValue("entryId", QString::fromLocal8Bit(value));
     }
+    if(settings.value("rendezvousHost").isNull())
+        settings.setValue("rendezvousHost", "127.0.0.1");
+    if(settings.value("rendezvousPort").isNull())
+        settings.setValue("rendezvousPort", "28938");
+
     guiTalk.setEntryId(settings.value("entryId").toString());
     guiTalk.setGateId(settings.value("gateId").toString());
-    guiTalk.setRendezvousHost(settings.value("rendezvousHost", "127.0.0.1").toString());
-    guiTalk.setRendezvousPort(settings.value("rendezvousPort", "28938").toString());
+    guiTalk.setRendezvousHost(settings.value("rendezvousHost").toString());
+    guiTalk.setRendezvousPort(settings.value("rendezvousPort").toString());
 
     entry::RvzClient rvzClient;
     entry::socks5::Server socks5Server;
     socks5Server.setRvzClient(&rvzClient);
 
-    auto startRvzClient = [&]
+    auto actualizeRvzClient = [&]
     {
-        utils::asio2Worker()->post([&, host=guiTalk.getRendezvousHost().toStdString(), port=guiTalk.getRendezvousPort().toStdString()]
+        utils::asio2Worker()->post([&,
+                                   host=settings.value("rendezvousHost").toString().toStdString(),
+                                   port=settings.value("rendezvousPort").toString().toStdString(),
+                                   entryId=settings.value("entryId").toString().toStdString(),
+                                   gateId=settings.value("gateId").toString().toStdString()]
         {
-            rvzClient.start(std::move(host), std::move(port));
+            rvzClient.actualizeEntry(std::move(entryId));
+            rvzClient.actualizeGate(std::move(gateId));
+            rvzClient.actualizeRendezvous(std::move(host), std::move(port));
         });
     };
+    actualizeRvzClient();
 
     QObject::connect(&guiTalk, &entry::GuiTalk::applyStateRequested, [&]
     {
@@ -76,12 +88,12 @@ int main(int argc, char* argv[])
         settings.setValue("gateId", guiTalk.getGateId());
         settings.setValue("rendezvousHost", guiTalk.getRendezvousHost());
         settings.setValue("rendezvousPort", guiTalk.getRendezvousPort());
-        startRvzClient();
+        actualizeRvzClient();
     });
 
-    rvzClient.subscribeOnConnect([&]()
+    rvzClient.subscribeOnConnect([&](asio::error_code ec)
     {
-        if (asio::error_code ec = asio2::get_last_error())
+        if (ec)
         {
             socks5Server.stop();
             QMetaObject::invokeMethod(&guiTalk, [&, txt=QString::fromLocal8Bit(ec.message())]{guiTalk.setRendezvousConnectivity(txt);});
@@ -92,13 +104,13 @@ int main(int argc, char* argv[])
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("ok");});
     });
 
-    rvzClient.subscribeOnDisconnect([&]
+    rvzClient.subscribeOnDisconnect([&](asio::error_code /*ec*/)
     {
         socks5Server.stop();
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("none");});
     });
 
-    startRvzClient();
+    rvzClient.start();
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     asio::signal_set signalset(utils::asio2Worker()->get_context());

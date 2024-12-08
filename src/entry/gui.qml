@@ -15,20 +15,21 @@ Window {
          GridLayout {
              Layout.fillWidth: true
              columns: 2
-             Text { text: "this entry id:" }    TextField { id: entryId;        Layout.fillWidth: true; text: cppTalk.entryId}
-             Text { text: "renzvous IP:" }      TextField { id: rendezvousHost; Layout.fillWidth: true; text: cppTalk.rendezvousHost }
-             Text { text: "port:" }             TextField { id: rendezvousPort; Layout.fillWidth: true; text: cppTalk.rendezvousPort }
-             Text { text: "remote gate id:" }   TextField { id: gateId;         Layout.fillWidth: true; text: cppTalk.gateId}
+             Text { text: "this entry id:" }    TextField { id: entryId;        text: cppTalk.entryId;          color: cppTalk.entryId        == text ? palette.text : "darkred";    Layout.fillWidth: true;}
+             Text { text: "renzvous IP:" }      TextField { id: rendezvousHost; text: cppTalk.rendezvousHost;   color: cppTalk.rendezvousHost == text ? palette.text : "darkred";    Layout.fillWidth: true;}
+             Text { text: "port:" }             TextField { id: rendezvousPort; text: cppTalk.rendezvousPort;   color: cppTalk.rendezvousPort == text ? palette.text : "darkred";    Layout.fillWidth: true;}
+             Text { text: "remote gate id:" }   TextField { id: gateId;         text: cppTalk.gateId;           color: cppTalk.gateId         == text ? palette.text : "darkred";    Layout.fillWidth: true;}
          }
 
          Button {
              Layout.fillWidth: true
              text: "apply"
              onClicked: {
-                 cppTalk.entryId = entryId.text
+                 cppTalk.entryId        = entryId.text
                  cppTalk.rendezvousHost = rendezvousHost.text
                  cppTalk.rendezvousPort = rendezvousPort.text
-                 cppTalk.gateId = gateId.text
+                 cppTalk.gateId         = gateId.text
+
                  cppTalk.applyStateRequested()
              }
          }
@@ -37,7 +38,7 @@ Window {
              Layout.fillWidth: true
              columns: 2
              Text { text: "rendezvous connectivity:" } Label { Layout.fillWidth: true; text: cppTalk.rendezvousConnectivity }
-             Text { text: "payload connections:" }   Label { Layout.fillWidth: true; text: "unknown" }
+             Text { text: "payload connections:" }     Label { Layout.fillWidth: true; text: "unknown" }
          }
 
          Label {
@@ -51,7 +52,7 @@ Window {
             rendezvousHost.text = cppTalk.rendezvousHost
         }
         function onRendezvousPortChanged() {
-            rendezvousPort.text = cppTalk.rendezvousHost
+            rendezvousPort.text = cppTalk.rendezvousPort
         }
     }
 
