@@ -53,7 +53,6 @@ namespace entry
         {
             for(const std::string& gateId : gateIds)
                 LOGI("gateId: " << gateId);
-            assert(0);
         });
 
         _rpcsClient.bind("sock5-close", [this](int id)
@@ -81,9 +80,12 @@ namespace entry
             _rendezvousPort = std::move(port);
             if (_started)
             {
-                _rpcsClient.stop();
-                if(!_rendezvousHost.empty() && !_rendezvousPort.empty())
-                    _rpcsClient.async_start(_rendezvousHost, _rendezvousPort);
+                _rpcsClient.post([&]
+                {
+                    _rpcsClient.stop();
+                    if(!_rendezvousHost.empty() && !_rendezvousPort.empty())
+                        _rpcsClient.async_start(_rendezvousHost, _rendezvousPort);
+                });
             }
         }
     }
@@ -115,7 +117,6 @@ namespace entry
     {
         if(!_started)
         {
-            _rpcsClient.stop();
             _started = true;
             if(!_rendezvousHost.empty() && !_rendezvousPort.empty())
                 _rpcsClient.async_start(_rendezvousHost, _rendezvousPort);
@@ -126,7 +127,10 @@ namespace entry
     void RvzClient::stop()
     {
         _started = false;
-        _rpcsClient.stop();
+        _rpcsClient.post([&]
+        {
+            _rpcsClient.stop();
+        });
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

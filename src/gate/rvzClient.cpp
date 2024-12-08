@@ -87,9 +87,12 @@ namespace gate
             _rendezvousPort = std::move(port);
             if (_started)
             {
-                _rpcsClient.stop();
-                if(!_rendezvousHost.empty() && !_rendezvousPort.empty())
-                    _rpcsClient.async_start(_rendezvousHost, _rendezvousPort);
+                _rpcsClient.post([&]
+                {
+                    _rpcsClient.stop();
+                    if(!_rendezvousHost.empty() && !_rendezvousPort.empty())
+                        _rpcsClient.async_start(_rendezvousHost, _rendezvousPort);
+                });
             }
         }
     }
@@ -106,7 +109,6 @@ namespace gate
     {
         if(!_started)
         {
-            _rpcsClient.stop();
             _started = true;
             if(!_rendezvousHost.empty() && !_rendezvousPort.empty())
                 _rpcsClient.async_start(_rendezvousHost, _rendezvousPort);
@@ -117,7 +119,10 @@ namespace gate
     void RvzClient::stop()
     {
         _started = false;
-        _rpcsClient.stop();
+        _rpcsClient.post([&]
+        {
+            _rpcsClient.stop();
+        });
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

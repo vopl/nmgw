@@ -53,7 +53,7 @@ Window {
             rendezvousHost.text = cppTalk.rendezvousHost
         }
         function onRendezvousPortChanged() {
-            rendezvousPort.text = cppTalk.rendezvousHost
+            rendezvousPort.text = cppTalk.rendezvousPort
         }
     }
 

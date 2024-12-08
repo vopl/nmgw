@@ -68,6 +68,9 @@ namespace entry::socks5
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::stop()
     {
-        Base::stop();
+        Base::post([&]
+        {
+            Base::stop();
+        });
     }
 }
