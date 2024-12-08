@@ -20,6 +20,38 @@ namespace entry
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    QString GuiTalk::getEntryId() const
+    {
+        return _entryId;
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void GuiTalk::setEntryId(const QString& value)
+    {
+        if(_entryId != value)
+        {
+            _entryId = value;
+            entryIdChanged();
+        }
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    QString GuiTalk::getGateId() const
+    {
+        return _gateId;
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void GuiTalk::setGateId(const QString& value)
+    {
+        if(_gateId != value)
+        {
+            _gateId = value;
+            gateIdChanged();
+        }
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     QString GuiTalk::getRendezvousHost() const
     {
         return _rendezvousHost;

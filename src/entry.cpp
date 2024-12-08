@@ -4,6 +4,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QSettings>
+#include <QRandomGenerator>
 #include "entry/rvzClient.hpp"
 #include "entry/socks5/server.hpp"
 #include "entry/guiTalk.hpp"
@@ -44,6 +45,16 @@ int main(int argc, char* argv[])
 
     QSettings settings;
 
+    if(settings.value("entryId").isNull())
+    {
+        QRandomGenerator gen{QRandomGenerator::securelySeeded()};
+        std::string value;
+        for(std::size_t i{}; i<32; ++i)
+            value += (char)gen.bounded('a', 'z');
+        settings.setValue("entryId", QString::fromLocal8Bit(value));
+    }
+    guiTalk.setEntryId(settings.value("entryId").toString());
+    guiTalk.setGateId(settings.value("gateId").toString());
     guiTalk.setRendezvousHost(settings.value("rendezvousHost", "127.0.0.1").toString());
     guiTalk.setRendezvousPort(settings.value("rendezvousPort", "28938").toString());
 
@@ -61,6 +72,8 @@ int main(int argc, char* argv[])
 
     QObject::connect(&guiTalk, &entry::GuiTalk::applyStateRequested, [&]
     {
+        settings.setValue("entryId", guiTalk.getEntryId());
+        settings.setValue("gateId", guiTalk.getGateId());
         settings.setValue("rendezvousHost", guiTalk.getRendezvousHost());
         settings.setValue("rendezvousPort", guiTalk.getRendezvousPort());
         startRvzClient();

@@ -15,16 +15,20 @@ Window {
          GridLayout {
              Layout.fillWidth: true
              columns: 2
-             Text { text: "renzvous IP:" } TextField { id: rendezvousHost; Layout.fillWidth: true; text: cppTalk.rendezvousHost }
-             Text { text: "port:" }        TextField { id: rendezvousPort; Layout.fillWidth: true; text: cppTalk.rendezvousPort }
+             Text { text: "this entry id:" }    TextField { id: entryId;        Layout.fillWidth: true; text: cppTalk.entryId}
+             Text { text: "renzvous IP:" }      TextField { id: rendezvousHost; Layout.fillWidth: true; text: cppTalk.rendezvousHost }
+             Text { text: "port:" }             TextField { id: rendezvousPort; Layout.fillWidth: true; text: cppTalk.rendezvousPort }
+             Text { text: "remote gate id:" }   TextField { id: gateId;         Layout.fillWidth: true; text: cppTalk.gateId}
          }
 
          Button {
              Layout.fillWidth: true
              text: "apply"
              onClicked: {
+                 cppTalk.entryId = entryId.text
                  cppTalk.rendezvousHost = rendezvousHost.text
                  cppTalk.rendezvousPort = rendezvousPort.text
+                 cppTalk.gateId = gateId.text
                  cppTalk.applyStateRequested()
              }
          }
