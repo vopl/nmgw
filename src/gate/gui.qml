@@ -36,7 +36,6 @@ Window {
              Layout.fillWidth: true
              columns: 2
              Text { text: "rendezvous connectivity:" } Label { Layout.fillWidth: true; text: cppTalk.rendezvousConnectivity }
-             Text { text: "payload connections:" }   Label { Layout.fillWidth: true; text: "unknown" }
          }
 
          Label {

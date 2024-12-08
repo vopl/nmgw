@@ -110,6 +110,15 @@ int main(int argc, char* argv[])
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("none");});
     });
 
+    rvzClient.subscribeOnGateList([&](std::vector<std::string> gateIds_)
+    {
+        QStringList gateIds;
+        for(const std::string& gateId : gateIds_)
+            gateIds.emplaceBack(QString::fromStdString(gateId));
+
+        QMetaObject::invokeMethod(&guiTalk, [&, gateIds]{guiTalk.setGateIds(gateIds);});
+    });
+
     rvzClient.start();
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

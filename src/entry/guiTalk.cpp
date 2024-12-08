@@ -98,4 +98,20 @@ namespace entry
             rendezvousConnectivityChanged();
         }
     }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    QStringList GuiTalk::getGateIds() const
+    {
+        return _gateIds;
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void GuiTalk::setGateIds(const QStringList& value)
+    {
+        if(_gateIds != value)
+        {
+            _gateIds = value;
+            gateIdsChanged();
+        }
+    }
 }

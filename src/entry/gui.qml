@@ -6,7 +6,7 @@ Window {
     width: 411
     height: 731
     visible: true
-    title: qsTr("nmgw gate")
+    title: qsTr("nmgw entry")
 
     ColumnLayout {
         anchors.fill: parent
@@ -38,11 +38,26 @@ Window {
              Layout.fillWidth: true
              columns: 2
              Text { text: "rendezvous connectivity:" } Label { Layout.fillWidth: true; text: cppTalk.rendezvousConnectivity }
-             Text { text: "payload connections:" }     Label { Layout.fillWidth: true; text: "unknown" }
          }
 
-         Label {
+         ListView {
+             id: gatesList
              Layout.fillHeight: true
+
+             flickableDirection: Flickable.AutoFlickDirection
+
+             model: cppTalk.gateIds
+             delegate: RowLayout {
+                 Button {
+                     text: "use";
+                     implicitWidth: implicitContentWidth + leftPadding + rightPadding
+                     onClicked: gateId.text = modelData
+                 }
+                 Text {
+                     text: modelData;
+                     color: gateId.text==modelData ? "darkgreen" : palette.text
+                 }
+             }
          }
     }
 

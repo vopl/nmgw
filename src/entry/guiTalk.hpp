@@ -13,6 +13,8 @@ namespace entry
         Q_PROPERTY(QString rendezvousPort         READ getRendezvousPort         WRITE setRendezvousPort         NOTIFY rendezvousPortChanged         FINAL)
         Q_PROPERTY(QString rendezvousConnectivity READ getRendezvousConnectivity WRITE setRendezvousConnectivity NOTIFY rendezvousConnectivityChanged FINAL)
 
+        Q_PROPERTY(QStringList gateIds            READ getGateIds                WRITE setGateIds                NOTIFY gateIdsChanged                FINAL)
+
     public:
         GuiTalk();
         ~GuiTalk();
@@ -36,6 +38,9 @@ namespace entry
         QString getRendezvousConnectivity() const;
         void setRendezvousConnectivity(const QString& value);
 
+        QStringList getGateIds() const;
+        void setGateIds(const QStringList& value);
+
     signals:
         void applyStateRequested();
         void entryIdChanged();
@@ -43,12 +48,14 @@ namespace entry
         void rendezvousHostChanged();
         void rendezvousPortChanged();
         void rendezvousConnectivityChanged();
+        void gateIdsChanged();
 
     private:
-        QString _entryId;
-        QString _gateId;
-        QString _rendezvousHost;
-        QString _rendezvousPort;
-        QString _rendezvousConnectivity;
+        QString     _entryId;
+        QString     _gateId;
+        QString     _rendezvousHost;
+        QString     _rendezvousPort;
+        QString     _rendezvousConnectivity;
+        QStringList _gateIds;
     };
 }

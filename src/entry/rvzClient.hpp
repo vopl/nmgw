@@ -20,6 +20,7 @@ namespace entry
         void subscribeOnConnect(std::function<void(asio::error_code)>);
         void subscribeOnDisconnect(std::function<void(asio::error_code)>);
 
+        void subscribeOnGateList(std::function<void(std::vector<std::string>)>);
     public:
         void socks5Open(std::function<void(int)>);
 
@@ -43,6 +44,8 @@ namespace entry
 
         std::vector<std::function<void(asio::error_code)>> _onConnect;
         std::vector<std::function<void(asio::error_code)>> _onDisconnect;
+
+        std::vector<std::function<void(std::vector<std::string>)>>  _onGateList;
 
         std::map<int, std::function<void(std::string)>>     _onSock5Input;
         std::map<int, std::function<void()>>                _onSock5Closed;

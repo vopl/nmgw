@@ -101,7 +101,14 @@ namespace gate
     void RvzClient::actualizeGate(std::string gateId)
     {
         if(_gateId != gateId)
+        {
             _gateId = std::move(gateId);
+            _rpcsClient.async_call([this]()
+            {
+                asio::error_code ec = asio2::get_last_error();
+                LOGI("rvz-client call entry-intro: " << ec);
+            }, "gate-intro", _gateId);
+        }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

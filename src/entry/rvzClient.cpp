@@ -51,8 +51,8 @@ namespace entry
 
         _rpcsClient.bind("gate-list", [this](std::vector<std::string> gateIds)
         {
-            for(const std::string& gateId : gateIds)
-                LOGI("gateId: " << gateId);
+            for(const auto& cb: _onGateList)
+                cb(gateIds);
         });
 
         _rpcsClient.bind("sock5-close", [this](int id)
@@ -143,6 +143,12 @@ namespace entry
     void RvzClient::subscribeOnDisconnect(std::function<void(asio::error_code)> cb)
     {
         _onDisconnect.emplace_back(std::move(cb));
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void RvzClient::subscribeOnGateList(std::function<void(std::vector<std::string>)> cb)
+    {
+        _onGateList.emplace_back(std::move(cb));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
