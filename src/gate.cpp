@@ -52,21 +52,18 @@ int main(int argc, char* argv[])
 
     auto startRvzClient = [&]
     {
-        rvzClient.start(
-                    guiTalk.getRendezvousHost().toStdString(),
-                    guiTalk.getRendezvousPort().toStdString());
+        utils::asio2Worker()->post([&, host=guiTalk.getRendezvousHost().toStdString(), port=guiTalk.getRendezvousPort().toStdString()]
+        {
+            rvzClient.start(std::move(host), std::move(port));
+        });
     };
 
-    auto onRendezvousHostPortChanged = [&]
+    QObject::connect(&guiTalk, &gate::GuiTalk::applyStateRequested, [&]
     {
         settings.setValue("rendezvousHost", guiTalk.getRendezvousHost());
         settings.setValue("rendezvousPort", guiTalk.getRendezvousPort());
         startRvzClient();
-    };
-
-    QObject::connect(&guiTalk, &gate::GuiTalk::rendezvousHostChanged, onRendezvousHostPortChanged);
-    QObject::connect(&guiTalk, &gate::GuiTalk::rendezvousPortChanged, onRendezvousHostPortChanged);
-
+    });
 
     rvzClient.onConnect([&]()
     {

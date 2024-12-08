@@ -29,6 +29,7 @@ namespace gate
         void setRendezvousConnectivity(const QString& value);
 
     signals:
+        void applyStateRequested();
         void rendezvousHostChanged();
         void rendezvousPortChanged();
         void rendezvousConnectivityChanged();

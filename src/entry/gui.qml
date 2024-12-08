@@ -25,6 +25,7 @@ Window {
              onClicked: {
                  cppTalk.rendezvousHost = rendezvousHost.text
                  cppTalk.rendezvousPort = rendezvousPort.text
+                 cppTalk.applyStateRequested()
              }
          }
 
