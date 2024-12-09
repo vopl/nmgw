@@ -75,9 +75,9 @@ int main(int argc, char* argv[])
                                    entryId=settings.value("entryId").toString().toStdString(),
                                    gateId=settings.value("gateId").toString().toStdString()]
         {
-            rvzClient.actualizeEntry(std::move(entryId));
+            rvzClient.actualizeEntry(common::EntryId{entryId});
             rvzClient.actualizeRendezvous(std::move(host), std::move(port));
-            socks5Server.setGateId(std::move(gateId));
+            socks5Server.setGateId(common::GateId{gateId});
         });
     };
     actualizeRvzClient();
@@ -110,11 +110,11 @@ int main(int argc, char* argv[])
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("none");});
     });
 
-    rvzClient.subscribeOnGateList([&](std::vector<std::string> gateIds_)
+    rvzClient.subscribeOnGateList([&](std::vector<common::GateId> gateIds_)
     {
         QStringList gateIds;
-        for(const std::string& gateId : gateIds_)
-            gateIds.emplaceBack(QString::fromStdString(gateId));
+        for(const common::GateId& gateId : gateIds_)
+            gateIds.emplaceBack(QString::fromStdString(gateId._value));
 
         QMetaObject::invokeMethod(&guiTalk, [&, gateIds]{guiTalk.setGateIds(gateIds);});
     });

@@ -67,7 +67,7 @@ namespace entry::socks5
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Server::setGateId(const std::string& gateId)
+    void Server::setGateId(const common::GateId& gateId)
     {
         _gateId = gateId;
         this->sessions().for_each([&](const SessionPtr& session)

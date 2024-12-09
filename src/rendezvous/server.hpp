@@ -6,6 +6,7 @@
 #include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
+#include "../common.hpp"
 
 namespace rendezvous
 {
@@ -30,14 +31,14 @@ namespace rendezvous
     private:
         struct Client
         {
-            SessionPtr  _session;
-            std::string _entryId;
-            std::string _gateId;
+            SessionPtr      _session;
+            common::EntryId _entryId;
+            common::GateId  _gateId;
         };
 
         using ClientBySession = bmi::member<Client, SessionPtr , &Client::_session>;
-        using ClientByEntryId = bmi::member<Client, std::string, &Client::_entryId>;
-        using ClientByGateId  = bmi::member<Client, std::string, &Client::_gateId>;
+        using ClientByEntryId = bmi::member<Client, common::EntryId, &Client::_entryId>;
+        using ClientByGateId  = bmi::member<Client, common::GateId, &Client::_gateId>;
 
         using Clients = bmi::multi_index_container<
             Client,
@@ -53,29 +54,25 @@ namespace rendezvous
     private:
         struct Socks5
         {
-            SessionPtr  _entrySession;
-            SessionPtr  _gateSession;
-            int         _id{};
+            SessionPtr          _entrySession;
+            SessionPtr          _gateSession;
+            common::Socks5Id    _id{};
         };
 
-        using Socks5ByEntrySession = bmi::member<Socks5, SessionPtr, &Socks5::_entrySession>;
-        using Socks5ByGateSession  = bmi::member<Socks5, SessionPtr, &Socks5::_gateSession>;
-        using Socks5ById           = bmi::member<Socks5, int       , &Socks5::_id>;
-        using Socks5ByEntrySessionAndId = bmi::composite_key<Socks5, Socks5ByEntrySession, Socks5ById>;
-        using Socks5ByGateSessionAndId  = bmi::composite_key<Socks5, Socks5ByGateSession, Socks5ById>;
+        using Socks5ByEntrySession = bmi::member<Socks5, SessionPtr,        &Socks5::_entrySession>;
+        using Socks5ByGateSession  = bmi::member<Socks5, SessionPtr,        &Socks5::_gateSession>;
+        using Socks5ById           = bmi::member<Socks5, common::Socks5Id,  &Socks5::_id>;
 
         using Socks5s = bmi::multi_index_container<
             Socks5,
             bmi::indexed_by<
                 bmi::ordered_non_unique<bmi::tag<Socks5ByEntrySession>, Socks5ByEntrySession>,
                 bmi::ordered_non_unique<bmi::tag<Socks5ByGateSession >, Socks5ByGateSession >,
-                bmi::ordered_non_unique<bmi::tag<Socks5ById          >, Socks5ById          >,
-
-                bmi::ordered_non_unique<bmi::tag<Socks5ByEntrySessionAndId>, Socks5ByEntrySessionAndId>,
-                bmi::ordered_non_unique<bmi::tag<Socks5ByGateSessionAndId >, Socks5ByGateSessionAndId >
+                bmi::ordered_unique    <bmi::tag<Socks5ById          >, Socks5ById          >
             >
         >;
 
-        Socks5s _socks5s;
+        Socks5s             _socks5s;
+        common::Socks5Id    _socks5IdGen{};
     };
 }

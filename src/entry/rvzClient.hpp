@@ -1,6 +1,7 @@
 #pragma once
 
 #include <asio2/rpc/rpcs_client.hpp>
+#include "../common.hpp"
 
 namespace entry
 {
@@ -11,7 +12,7 @@ namespace entry
         ~RvzClient();
 
         void actualizeRendezvous(std::string host, std::string port);
-        void actualizeEntry(std::string entryId);
+        void actualizeEntry(common::EntryId entryId);
 
         void start();
         void stop();
@@ -19,33 +20,33 @@ namespace entry
         void subscribeOnConnect(std::function<void(asio::error_code)>);
         void subscribeOnDisconnect(std::function<void(asio::error_code)>);
 
-        void subscribeOnGateList(std::function<void(std::vector<std::string>)>);
+        void subscribeOnGateList(std::function<void(std::vector<common::GateId>)>);
     public:
-        void socks5Open(const std::string& gateId, std::function<void(int)>);
+        void socks5Open(const common::GateId& gateId, std::function<void(common::Socks5Id)>);
 
-        void subscribeOnSocks5Input(int id, std::function<void(std::string)>);
-        void subscribeOnSocks5Closed(int id, std::function<void()>);
+        void subscribeOnSocks5Input(common::Socks5Id id, std::function<void(std::string)>);
+        void subscribeOnSocks5Closed(common::Socks5Id id, std::function<void()>);
 
-        void socks5Output(int id, std::string data);
-        void socks5Close(int id);
-
-    private:
-        void activateOnSocks5Input(int id, std::string data);
-        void activateOnSocks5Closed(int id);
+        void socks5Output(common::Socks5Id id, std::string data);
+        void socks5Close(common::Socks5Id id);
 
     private:
-        asio2::rpcs_client _rpcsClient;
-        bool        _started{};
-        std::string _rendezvousHost;
-        std::string _rendezvousPort;
-        std::string _entryId;
+        void activateOnSocks5Input(common::Socks5Id id, std::string data);
+        void activateOnSocks5Closed(common::Socks5Id id);
+
+    private:
+        asio2::rpcs_client  _rpcsClient;
+        bool                _started{};
+        std::string         _rendezvousHost;
+        std::string         _rendezvousPort;
+        common::EntryId     _entryId;
 
         std::vector<std::function<void(asio::error_code)>> _onConnect;
         std::vector<std::function<void(asio::error_code)>> _onDisconnect;
 
-        std::vector<std::function<void(std::vector<std::string>)>>  _onGateList;
+        std::vector<std::function<void(std::vector<common::GateId>)>>   _onGateList;
 
-        std::map<int, std::function<void(std::string)>>     _onSocks5Input;
-        std::map<int, std::function<void()>>                _onSocks5Closed;
+        std::map<common::Socks5Id, std::function<void(std::string)>>    _onSocks5Input;
+        std::map<common::Socks5Id, std::function<void()>>               _onSocks5Closed;
     };
 }

@@ -45,7 +45,7 @@ namespace gate::socks5
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SessionPtr Server::open()
+    SessionPtr Server::open(common::Socks5Id socks5Id)
     {
         assert(!"not impl");
         // socks5IdGen++;
@@ -62,36 +62,40 @@ namespace gate::socks5
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SessionPtr Server::get(Session::key_type sessionId)
+    SessionPtr Server::get(common::Socks5Id socks5Id)
     {
-        return _sessionsMgr.find(sessionId);
+        assert(!"not impl");
+        return {};
+        // return _sessionsMgr.find(sessionId);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool Server::output(Session::key_type sessionId, std::string data)
+    bool Server::output(common::Socks5Id socks5Id, std::string data)
     {
-        gate::socks5::SessionPtr session = get(sessionId);
-        if(!session)
-            return false;
-        session->output(std::move(data));
-        return true;
+        assert(!"not impl");
+        return {};
+        // gate::socks5::SessionPtr session = get(sessionId);
+        // if(!session)
+        //     return false;
+        // session->output(std::move(data));
+        // return true;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Server::close(Session::key_type sessionId)
+    void Server::close(common::Socks5Id socks5Id)
     {
         assert(!"not impl");
         // socks5s.erase(socks5Id);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Server::subscribeOnInput(std::function<void(int, std::string)> cb)
+    void Server::subscribeOnInput(std::function<void(common::Socks5Id, std::string)> cb)
     {
         _onInput.emplace_back(std::move(cb));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Server::subscribeOnClosed(std::function<void(int)> cb)
+    void Server::subscribeOnClosed(std::function<void(common::Socks5Id)> cb)
     {
         _onClosed.emplace_back(std::move(cb));
     }

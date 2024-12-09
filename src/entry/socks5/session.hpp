@@ -1,6 +1,7 @@
 #pragma once
 
 #include <asio2/tcp/tcp_session.hpp>
+#include "../../common.hpp"
 
 namespace entry
 {
@@ -23,7 +24,7 @@ namespace entry::socks5
         ~Session();
 
         void setRvzClient(RvzClient* rvzClient);
-        void setGateId(const std::string& gateId);
+        void setGateId(const common::GateId& gateId);
         void processOutput(std::string_view data);
         void processClose();
 
@@ -37,13 +38,15 @@ namespace entry::socks5
             null,
             opening,
             work,
+            fail,
         };
 
     private:
-        RvzClient*      _rvzClient{};
-        std::string     _gateId;
-        DownstreamState _downStreamState{};
-        int             _downstreamId{};
+        RvzClient*              _rvzClient{};
+        common::GateId          _gateId;
+        DownstreamState         _downStreamState{};
+        common::Socks5Id        _downstreamId{};
+        static constexpr int    _reopenTimerId = 288451;
 
         std::deque<std::string> _output;
     };

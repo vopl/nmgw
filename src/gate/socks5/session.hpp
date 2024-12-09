@@ -12,9 +12,6 @@ namespace gate::socks5
                 asio2::detail::listener_t& listener);
         ~Session();
 
-        key_type hash_key() const noexcept;
-        key_type key() const noexcept;
-
         void output(std::string data);
 
     private:

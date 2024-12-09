@@ -77,7 +77,7 @@ namespace rendezvous
                 {
                     Client prev = *iter;
                     idx.erase(iter);
-                    if(!prev._gateId.empty())
+                    if(prev._gateId != common::GateId{})
                         distributeGateList();
                 }
             }
@@ -97,7 +97,7 @@ namespace rendezvous
             }
         });
 
-        _rpcsServer.bind("gate-intro", [this](const SessionPtr& session, std::string gateId)
+        _rpcsServer.bind("gate-intro", [this](const SessionPtr& session, common::GateId gateId)
         {
             LOGI("rvz-server gate-intro: " << session->remote_address() << ":" << session->remote_port() << ", " << gateId);
 
@@ -114,7 +114,7 @@ namespace rendezvous
             }
         });
 
-        _rpcsServer.bind("entry-intro", [this](const SessionPtr& session, std::string entryId)
+        _rpcsServer.bind("entry-intro", [this](const SessionPtr& session, common::EntryId entryId)
         {
             LOGI("rvz-server entry-intro: " << session->remote_address() << ":" << session->remote_port() << ", " << entryId);
 
@@ -127,70 +127,98 @@ namespace rendezvous
                     idx.modify(iter, [&](Client& next){ next._entryId = entryId; });
             }
 
-            if(!entryId.empty())
+            if(entryId != common::EntryId{})
                 distributeGateList(session);
         });
 
-        _rpcsServer.bind("entry-socks5-open", [this](const SessionPtr& session, std::string gateId)
+        _rpcsServer.bind("entry-socks5-open", [this](const SessionPtr& session, common::GateId gateId)
         {
-            asio2::rpc::promise<int> resPromise;
-            asio2::rpc::future<int> resFuture = resPromise.get_future();
-
             auto& idx = _clients.get<ClientByGateId>();
             auto iter = idx.find(gateId);
             if(idx.end() == iter)
-            {
-                resPromise.set_value(0);
-                return resFuture;
-            }
+                return common::Socks5Id{};
 
-            iter->_session->async_call([&, resPromise=std::move(resPromise)](int id) mutable {
+            ++_socks5IdGen._value;
+            common::Socks5Id socks5Id{_socks5IdGen};
+
+            _socks5s.emplace(Socks5{session, iter->_session, socks5Id});
+
+            iter->_session->async_call([this, session, socks5Id]
+            {
                 asio::error_code ec = asio2::get_last_error();
                 if(ec)
-                    resPromise.set_value(0);
-                else
-                    resPromise.set_value(id);
-            }, "socks5-open");
+                {
+                    _socks5s.get<Socks5ById>().erase(socks5Id);
+                    if(session->is_started())
+                        session->async_call("socks5-close", socks5Id);
+                }
+            }, "socks5-open", socks5Id);
 
-            return resFuture;
+            return socks5Id;
         });
 
-        _rpcsServer.bind("entry-socks5-close", [this](const SessionPtr& session, int socks5Id)
+        _rpcsServer.bind("entry-socks5-close", [this](const SessionPtr& session, common::Socks5Id socks5Id)
         {
-            auto& idx = _socks5s.get<Socks5ByEntrySessionAndId>();
-            auto iter = idx.find(std::tuple{session, socks5Id});
+            auto& idx = _socks5s.get<Socks5ById>();
+            auto iter = idx.find(socks5Id);
             if(idx.end() == iter)
                 return;
 
-            iter->_gateSession->async_call("socks5-open", socks5Id);
+            if(iter->_entrySession != session)
+            {
+                LOGW("entry-socks5-close with non-associated socks5");
+                return;
+            }
+
+            _socks5s.get<Socks5ById>().erase(socks5Id);
+            iter->_gateSession->async_call("socks5-close", socks5Id);
         });
 
-        _rpcsServer.bind("entry-socks5-traf", [&](const SessionPtr& session, int socks5Id, std::string data)
+        _rpcsServer.bind("entry-socks5-traf", [&](const SessionPtr& session, common::Socks5Id socks5Id, std::string data)
         {
-            auto& idx = _socks5s.get<Socks5ByEntrySessionAndId>();
-            auto iter = idx.find(std::tuple{session, socks5Id});
+            auto& idx = _socks5s.get<Socks5ById>();
+            auto iter = idx.find(socks5Id);
             if(idx.end() == iter)
                 return;
+
+            if(iter->_entrySession != session)
+            {
+                LOGW("entry-socks5-traf with non-associated socks5");
+                return;
+            }
 
             iter->_gateSession->async_call("socks5-traf", socks5Id, std::move(data));
         });
 
-        _rpcsServer.bind("gate-socks5-close", [&](const SessionPtr& session, int socks5Id)
+        _rpcsServer.bind("gate-socks5-close", [&](const SessionPtr& session, common::Socks5Id socks5Id)
         {
-            auto& idx = _socks5s.get<Socks5ByGateSessionAndId>();
-            auto iter = idx.find(std::tuple{session, socks5Id});
+            auto& idx = _socks5s.get<Socks5ById>();
+            auto iter = idx.find(socks5Id);
             if(idx.end() == iter)
                 return;
 
+            if(iter->_entrySession != session)
+            {
+                LOGW("gate-socks5-close with non-associated socks5");
+                return;
+            }
+
+            _socks5s.get<Socks5ById>().erase(socks5Id);
             iter->_entrySession->async_call("socks5-close", socks5Id);
         });
 
-        _rpcsServer.bind("gate-socks5-traf", [&](const SessionPtr& session, int socks5Id, std::string data)
+        _rpcsServer.bind("gate-socks5-traf", [&](const SessionPtr& session, common::Socks5Id socks5Id, std::string data)
         {
-            auto& idx = _socks5s.get<Socks5ByGateSessionAndId>();
-            auto iter = idx.find(std::tuple{session, socks5Id});
+            auto& idx = _socks5s.get<Socks5ById>();
+            auto iter = idx.find(socks5Id);
             if(idx.end() == iter)
                 return;
+
+            if(iter->_entrySession != session)
+            {
+                LOGW("gate-socks5-traf with non-associated socks5");
+                return;
+            }
 
             iter->_entrySession->async_call("socks5-traf", socks5Id, std::move(data));
         });
@@ -219,9 +247,9 @@ namespace rendezvous
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::distributeGateList(const SessionPtr& target)
     {
-        std::vector<std::string> gateIds;
+        std::vector<common::GateId> gateIds;
         for(auto iter=_clients.begin(); iter!=_clients.end(); ++iter)
-            if(!iter->_gateId.empty())
+            if(iter->_gateId != common::GateId{})
                 gateIds.emplace_back(iter->_gateId);
 
         for(auto iter=_clients.begin(); iter!=_clients.end(); ++iter)

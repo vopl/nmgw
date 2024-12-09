@@ -45,13 +45,13 @@ int main(int argc, char* argv[])
 
     QSettings settings;
 
-    if(settings.value("entryId").isNull())
+    if(settings.value("gateId").isNull())
     {
         QRandomGenerator gen{QRandomGenerator::securelySeeded()};
         std::string value;
         for(std::size_t i{}; i<32; ++i)
             value += (char)gen.bounded('a', 'z');
-        settings.setValue("entryId", QString::fromLocal8Bit(value));
+        settings.setValue("gateId", QString::fromLocal8Bit(value));
     }
     if(settings.value("rendezvousHost").isNull())
         settings.setValue("rendezvousHost", "127.0.0.1");
@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
                                    port=settings.value("rendezvousPort").toString().toStdString(),
                                    gateId=settings.value("gateId").toString().toStdString()]
         {
-            rvzClient.actualizeGate(std::move(gateId));
+            rvzClient.actualizeGate(common::GateId{gateId});
             rvzClient.actualizeRendezvous(std::move(host), std::move(port));
         });
     };
@@ -105,28 +105,28 @@ int main(int argc, char* argv[])
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("none");});
     });
 
-    rvzClient.subscribeOnSocks5Open([&]
+    rvzClient.subscribeOnSocks5Open([&](common::Socks5Id socks5Id)
     {
-        return (int)socks5Server.open()->key();
+        socks5Server.open(socks5Id);
     });
 
-    rvzClient.subscribeOnSocks5Closed([&](int socks5Id)
+    rvzClient.subscribeOnSocks5Closed([&](common::Socks5Id socks5Id)
     {
         socks5Server.close(socks5Id);
     });
 
-    rvzClient.subscribeOnSocks5Input([&](int socks5Id, std::string data)
+    rvzClient.subscribeOnSocks5Input([&](common::Socks5Id socks5Id, std::string data)
     {
         if(!socks5Server.output(socks5Id, std::move(data)))
             rvzClient.socks5Close(socks5Id);
     });
 
-    socks5Server.subscribeOnInput([&](int socks5Id, std::string data)
+    socks5Server.subscribeOnInput([&](common::Socks5Id socks5Id, std::string data)
     {
         rvzClient.socks5Output(socks5Id, std::move(data));
     });
 
-    socks5Server.subscribeOnClosed([&](int socks5Id)
+    socks5Server.subscribeOnClosed([&](common::Socks5Id socks5Id)
     {
         rvzClient.socks5Close(socks5Id);
     });

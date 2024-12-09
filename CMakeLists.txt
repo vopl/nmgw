@@ -35,6 +35,8 @@ add_library(logger STATIC ${LOGGER_HEADERS} ${LOGGER_SOURCES})
 qt_add_executable(entry
     src/utils.hpp
     src/utils.cpp
+    src/common.hpp
+    src/common.cpp
     src/entry.cpp
     src/entry/guiTalk.hpp
     src/entry/guiTalk.cpp
@@ -65,6 +67,8 @@ target_link_libraries(entry PRIVATE logger asio2 -lssl -lcrypto Qt6::Quick)
 add_executable(rendezvous
     src/utils.hpp
     src/utils.cpp
+    src/common.hpp
+    src/common.cpp
     src/rendezvous.cpp
     src/rendezvous/server.hpp
     src/rendezvous/server.cpp
@@ -75,6 +79,8 @@ target_link_libraries(rendezvous PRIVATE logger asio2 -lssl -lcrypto)
 qt_add_executable(gate
     src/utils.hpp
     src/utils.cpp
+    src/common.hpp
+    src/common.cpp
     src/gate.cpp
     src/gate/guiTalk.hpp
     src/gate/guiTalk.cpp
