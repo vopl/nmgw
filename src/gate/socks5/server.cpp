@@ -1,13 +1,11 @@
 #include "server.hpp"
 #include "../../utils.hpp"
+#include <logger.hpp>
 
 namespace gate::socks5
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Server::Server()
-        : _state{asio2::detail::state_t::stopped}
-        , _sessionsMgr{utils::asio2Worker()->get(), _state}
-        , _listener{}
     {
     }
 
@@ -20,72 +18,96 @@ namespace gate::socks5
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::start()
     {
-        _state.store(asio2::detail::state_t::started);
+        _implServer.start("127.9.9.19", 17052);
+        if(asio::error_code ec = asio2::get_last_error())
+        {
+            LOGE("socks5 server start: " << ec);
+            return;
+        }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::stop()
     {
-        _state.store(asio2::detail::state_t::stopping);
-        _sessionsMgr.dispatch([this]
-        {
-            _sessionsMgr.for_each([](const SessionPtr& session)
-            {
-                session->stop();
-            });
-        });
-
-        //assert(!"not impl");
-        // for(auto& [_, socks5] : socks5s)
-        //     socks5->close();
-        // socks5s = {};
-
-        // socks5IdGen = {};
-
+        _implSessions.clear();
+        _implServer.stop();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     SessionPtr Server::open(common::Socks5Id socks5Id)
     {
-        assert(!"not impl");
-        // socks5IdGen++;
+        auto [iter, inserted] = _implSessions.emplace(std::piecewise_construct_t{},
+                                                     std::tuple{socks5Id},
+                                                     std::tuple{});
+        assert(inserted);
+        SessionPtr session = iter->second;
 
-        // Socks5Ptr socks5 = Socks5::create(utils::asio2Worker()->get());
-        // socks5->_onRead = [socks5IdGen, &rvzClient](std::string input)
-        // {
-        //     rvzClient.output(socks5IdGen, std::move(input));
-        // };
-        // socks5->startRead();
-        // socks5s[socks5IdGen] = std::move(socks5);
-        // return socks5IdGen;
+        auto processOnClose = [socks5Id, this]
+        {
+            _implSessions.erase(socks5Id);
+            for(const auto& onClosed: _onClosed)
+                onClosed(socks5Id);
+        };
 
+        session->async_start("127.9.9.19", 17052);
+        session->bind_connect([socks5Id, this, session, processOnClose]()
+        {
+            if(asio::error_code ec = asio2::get_last_error())
+            {
+                LOGE("socks5 tcp client connect: " << ec);
+                processOnClose();
+                return;
+            }
+
+            session->bind_recv([socks5Id, this, processOnClose](std::string_view data)
+            {
+                if(asio::error_code ec = asio2::get_last_error())
+                {
+                    LOGE("socks5 tcp client read: " << ec);
+                    processOnClose();
+                    return;
+                }
+
+                for(const auto& onInput: _onInput)
+                    onInput(socks5Id, std::string{data});
+            });
+        });
+
+        return iter->second;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     SessionPtr Server::get(common::Socks5Id socks5Id)
     {
-        assert(!"not impl");
-        return {};
-        // return _sessionsMgr.find(sessionId);
+        auto iter = _implSessions.find(socks5Id);
+        if(_implSessions.end() == iter)
+            return {};
+        return iter->second;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     bool Server::output(common::Socks5Id socks5Id, std::string data)
     {
-        assert(!"not impl");
-        return {};
-        // gate::socks5::SessionPtr session = get(sessionId);
-        // if(!session)
-        //     return false;
-        // session->output(std::move(data));
-        // return true;
+        auto iter = _implSessions.find(socks5Id);
+        if(_implSessions.end() == iter)
+            return false;
+
+        iter->second->async_send(std::move(data));
+        return true;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::close(common::Socks5Id socks5Id)
     {
-        assert(!"not impl");
-        // socks5s.erase(socks5Id);
+        auto iter = _implSessions.find(socks5Id);
+        if(_implSessions.end() == iter)
+            return;
+
+        iter->second->stop();
+        _implSessions.erase(iter);
+
+        for(const auto& onClosed: _onClosed)
+            onClosed(socks5Id);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

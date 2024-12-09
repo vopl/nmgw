@@ -1,15 +1,14 @@
 #pragma once
 
-#include <asio2/proxy/socks5_session.hpp>
+#include <asio2/proxy/socks5_client.hpp>
 
 namespace gate::socks5
 {
     class Session
-        : public asio2::socks5_session_t<Session>
+        : public asio2::socks5_tcp_client_t<Session>
     {
     public:
-        Session(asio2::detail::session_mgr_t<Session>& sessionMgr,
-                asio2::detail::listener_t& listener);
+        Session();
         ~Session();
 
         void output(std::string data);

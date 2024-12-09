@@ -1,6 +1,7 @@
 #pragma once
 
 #include <asio2/proxy/socks5_server.hpp>
+#include <asio2/proxy/socks5_client.hpp>
 #include "session.hpp"
 #include "../../common.hpp"
 
@@ -24,9 +25,8 @@ namespace gate::socks5
         void subscribeOnClosed(std::function<void(common::Socks5Id)>);
 
     private:
-        std::atomic<asio2::detail::state_t>     _state;
-        asio2::detail::session_mgr_t<Session>   _sessionsMgr;
-        asio2::detail::listener_t               _listener;
+        asio2::socks5_server _implServer;
+        std::map<common::Socks5Id, SessionPtr> _implSessions;
 
         std::vector<std::function<void(common::Socks5Id, std::string)>>  _onInput;
         std::vector<std::function<void(common::Socks5Id)>>               _onClosed;
