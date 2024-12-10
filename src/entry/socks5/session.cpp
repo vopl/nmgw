@@ -107,7 +107,7 @@ namespace entry::socks5
                         async_send(std::move(data), [this, dataSize]
                         {
                             asio::error_code ec = asio2::get_last_error();
-                            LOGI("tcp-to-socks5 session " << remote_address() << ":" << remote_port() << " send " << dataSize << " bytes " << ec);
+                            LOGI("tcp-to-socks5 session " << remote_address() << ":" << remote_port() << " sent " << dataSize << " bytes " << ec);
                         });
                     });
 
