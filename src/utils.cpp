@@ -14,7 +14,7 @@ namespace utils
         QFile file{path};
         if(!file.open(QFile::ReadOnly))
         {
-            LOGE("unable to open for reading: " << path.toStdString() << ", " << file.errorString().toStdString());
+            LOGE("unable to open for reading: " << path.toStdString() << " [" << file.errorString().toStdString() << "]");
             return {};
         }
         return file.readAll();

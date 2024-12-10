@@ -24,15 +24,15 @@ namespace entry
     public:
         void socks5Open(const common::GateId& gateId, std::function<void(common::Socks5Id)>);
 
-        void subscribeOnSocks5Input(common::Socks5Id id, std::function<void(std::string)>);
-        void subscribeOnSocks5Closed(common::Socks5Id id, std::function<void()>);
+        void subscribeOnSocks5Input(common::Socks5Id socks5Id, std::function<void(std::string)>);
+        void subscribeOnSocks5Closed(common::Socks5Id socks5Id, std::function<void()>);
 
-        void socks5Output(common::Socks5Id id, std::string data);
-        void socks5Close(common::Socks5Id id);
+        void socks5Output(common::Socks5Id socks5Id, std::string data);
+        void socks5Close(common::Socks5Id socks5Id);
 
     private:
-        void activateOnSocks5Input(common::Socks5Id id, std::string data);
-        void activateOnSocks5Closed(common::Socks5Id id);
+        void activateOnSocks5Input(common::Socks5Id socks5Id, std::string data);
+        void activateOnSocks5Closed(common::Socks5Id socks5Id);
 
     private:
         asio2::rpcs_client  _rpcsClient;

@@ -17,29 +17,29 @@ namespace gate
                     utils::qtReadAllFile(":/etc/client.crt").toStdString(),
                     utils::qtReadAllFile(":/etc/client.key").toStdString(),
                     utils::qtReadAllFile(":/etc/client.pswd").toStdString());
-        if(const asio::error_code ec = asio2::get_last_error())
-            LOGE("set cert: " << ec);
+        asio::error_code ec = asio2::get_last_error();
+        LOGI("set cert " << ec);
 
         _rpcsClient.set_dh_buffer(utils::qtReadAllFile(":/etc/dh2048.pem").toStdString());
-        if(const asio::error_code ec = asio2::get_last_error())
-            LOGE("set dh params: " << ec);
+        ec = asio2::get_last_error();
+        LOGI("set dh params " << ec);
 
         _rpcsClient.bind_connect([this]
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("rvz-client connect: " << ec);
+            LOGI("rvz-client on connect " << ec);
             for(const auto& cb: _onConnect)
                 cb(ec);
 
             if(ec)
                 return;
 
-            if(_gateId != common::GateId{})
+            if(_gateId)
             {
-                _rpcsClient.async_call([this]()
+                _rpcsClient.async_call([gateId = _gateId]()
                 {
                     asio::error_code ec = asio2::get_last_error();
-                    LOGI("rvz-client call gate-intro: " << ec);
+                    LOGI("rvz-client call gate-intro " << gateId << " " << ec);
                 }, "gate-intro", _gateId);
             }
         });
@@ -47,27 +47,33 @@ namespace gate
         _rpcsClient.bind_disconnect([this]
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("rvz-client disconnect: " << ec);
+            LOGI("rvz-client on disconnect " << ec);
             for(const auto& cb: _onDisconnect)
                 cb(ec);
         });
 
-        _rpcsClient.bind("socks5-open", [this](common::Socks5Id id)
+        _rpcsClient.bind("socks5-open", [this](common::Socks5Id socks5Id)
         {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-client on socks5-open " << socks5Id << " " << ec);
             for(const auto& cb: _onSocks5Open)
-                cb(id);
+                cb(socks5Id);
         });
 
-        _rpcsClient.bind("socks5-close", [this](common::Socks5Id id)
+        _rpcsClient.bind("socks5-close", [this](common::Socks5Id socks5Id)
         {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-client on socks5-close " << socks5Id << " " << ec);
             for(const auto& cb: _onSocks5Closed)
-                cb(id);
+                cb(socks5Id);
         });
 
-        _rpcsClient.bind("socks5-traf", [&](common::Socks5Id id, std::string data)
+        _rpcsClient.bind("socks5-traf", [&](common::Socks5Id socks5Id, std::string data)
         {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-client on socks5-traf " << socks5Id << " " << data.size() << " bytes " << ec);
             for(const auto& cb: _onSocks5Input)
-                cb(id, data);
+                cb(socks5Id, data);
         });
     }
 
@@ -103,10 +109,10 @@ namespace gate
             _gateId = std::move(gateId);
             if(_rpcsClient.is_started())
             {
-                _rpcsClient.async_call([this]()
+                _rpcsClient.async_call([gateId=_gateId]()
                 {
                     asio::error_code ec = asio2::get_last_error();
-                    LOGI("rvz-client call gate-intro: " << ec);
+                    LOGI("rvz-client call gate-intro " << gateId << " "<< ec);
                 }, "gate-intro", _gateId);
             }
         }
@@ -164,14 +170,23 @@ namespace gate
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::socks5Output(common::Socks5Id sock5Id, std::string data)
+    void RvzClient::socks5Output(common::Socks5Id socks5Id, std::string data)
     {
-        _rpcsClient.async_call("gate-socks5-traf", sock5Id, std::move(data));
+        std::size_t dataSize = data.size();
+        _rpcsClient.async_call([socks5Id, dataSize]
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-client call gate-socks5-traf " << socks5Id << " " << dataSize << " bytes "<< ec);
+        }, "gate-socks5-traf", socks5Id, std::move(data));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::socks5Close(common::Socks5Id sock5Id)
+    void RvzClient::socks5Close(common::Socks5Id socks5Id)
     {
-        _rpcsClient.async_call("gate-socks5-close", sock5Id);
+        _rpcsClient.async_call([socks5Id]
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-client call gate-socks5-close " << socks5Id << " "<< ec);
+        }, "gate-socks5-close", socks5Id);
     }
 }

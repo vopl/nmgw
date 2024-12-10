@@ -19,22 +19,28 @@ namespace gate::socks5
     void Server::start()
     {
         _implServer.start("127.9.9.19", 17052);
-        if(asio::error_code ec = asio2::get_last_error())
-        {
-            LOGE("socks5 server start: " << ec);
-            return;
-        }
+        asio::error_code ec = asio2::get_last_error();
+        LOGI("socks5 server start " << ec);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::stop()
     {
+        for(auto& [socks5Id, session] : _implSessions)
+        {
+
+        }
         _implSessions.clear();
-        _implServer.stop();
+        if(_implServer.is_started())
+        {
+            _implServer.stop();
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("socks5 server stop " << ec);
+        }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SessionPtr Server::open(common::Socks5Id socks5Id)
+    void Server::open(common::Socks5Id socks5Id)
     {
         auto [iter, inserted] = _implSessions.emplace(
                                     socks5Id,
@@ -42,48 +48,47 @@ namespace gate::socks5
         assert(inserted);
         SessionPtr session = iter->second;
 
-        auto processOnClose = [socks5Id, this]
+        auto onClose = [socks5Id, this]
         {
-            _implSessions.erase(socks5Id);
-            for(const auto& onClosed: _onClosed)
-                onClosed(socks5Id);
+            if(_implSessions.erase(socks5Id))
+            {
+                for(const auto& onClosed: _onClosed)
+                    onClosed(socks5Id);
+            }
         };
 
-        session->async_start("127.9.9.19", 17052);
-        session->bind_connect([socks5Id, this, session, processOnClose]()
+        session->bind_connect([socks5Id, this, session, onClose]()
         {
-            if(asio::error_code ec = asio2::get_last_error())
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("socks5 session " << socks5Id << " on connect " << ec);
+
+            if(ec)
             {
-                LOGE("socks5 tcp client connect: " << ec);
-                processOnClose();
+                onClose();
                 return;
             }
 
-            session->bind_recv([socks5Id, this, processOnClose](std::string_view data)
+            session->bind_recv([socks5Id, this, onClose](std::string_view data)
             {
-                LOGD("recv " << data.size());
-                if(asio::error_code ec = asio2::get_last_error())
-                {
-                    LOGE("socks5 tcp client read: " << ec);
-                    processOnClose();
+                asio::error_code ec = asio2::get_last_error();
+                LOGI("socks5 session " << socks5Id << " on recv " << data.size() << " bytes " << ec);
+
+                if(ec)
                     return;
-                }
 
                 for(const auto& onInput: _onInput)
                     onInput(socks5Id, std::string{data});
             });
         });
 
-        return iter->second;
-    }
+        session->bind_disconnect([socks5Id, this, session, onClose]()
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("socks5 session " << socks5Id << " on disconnect " << ec);
+            onClose();
+        });
 
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SessionPtr Server::get(common::Socks5Id socks5Id)
-    {
-        auto iter = _implSessions.find(socks5Id);
-        if(_implSessions.end() == iter)
-            return {};
-        return iter->second;
+        session->async_start("127.9.9.19", 17052);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -93,8 +98,12 @@ namespace gate::socks5
         if(_implSessions.end() == iter)
             return false;
 
-        LOGD("send " << data.size());
-        iter->second->async_send(std::move(data));
+        std::size_t dataSize = data.size();
+        iter->second->async_send(std::move(data), [socks5Id, dataSize]
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("socks5 session " << socks5Id << " sent " << dataSize << " bytes " << ec);
+        });
         return true;
     }
 
@@ -105,8 +114,11 @@ namespace gate::socks5
         if(_implSessions.end() == iter)
             return;
 
-        iter->second->stop();
+        SessionPtr session = iter->second;
         _implSessions.erase(iter);
+
+        if(session->is_started())
+            session->stop();
 
         for(const auto& onClosed: _onClosed)
             onClosed(socks5Id);

@@ -5,16 +5,37 @@
 
 namespace std
 {
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <class I>
     I begin(const std::pair<I, I>& range)
     {
         return range.first;
     }
 
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <class I>
     I end(const std::pair<I, I>& range)
     {
         return range.second;
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    template <class T>
+    std::ostream& operator<<(std::ostream& out, const std::vector<T>& vec)
+    {
+        out << '[';
+        bool afterFirst = false;
+        for(const T& e : vec)
+        {
+            if(afterFirst)
+                out << ',';
+            else
+                afterFirst = true;
+
+            out << e;
+        }
+        out << ']';
+        return out;
     }
 }
 
@@ -30,35 +51,35 @@ namespace rendezvous
                     utils::readAllFile("../etc/server.crt"),
                     utils::readAllFile("../etc/server.key"),
                     utils::readAllFile("../etc/server.pswd"));
-        if(const asio::error_code ec = asio2::get_last_error())
-            LOGE("set cert: " << ec);
+        asio::error_code ec = asio2::get_last_error();
+        LOGI("set cert " << ec);
 
         _rpcsServer.set_dh_buffer(utils::readAllFile("../etc/dh2048.pem"));
-        if(const asio::error_code ec = asio2::get_last_error())
-            LOGE("set dh params: " << ec);
+        ec = asio2::get_last_error();
+        LOGI("set dh params " << ec);
 
         _rpcsServer.bind_start([&]
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("rvz-server start: " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << ", " << ec);
+            LOGI("rvz-server on start: " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << " " << ec);
         });
 
         _rpcsServer.bind_stop([&]
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("rvz-server stop: " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << ", " << ec);
+            LOGI("rvz-server on stop " << _rpcsServer.listen_address() << ":" << _rpcsServer.listen_port() << " " << ec);
         });
 
         _rpcsServer.bind_accept([this](const SessionPtr& session)
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("rvz-server accept: " << session->remote_address() << ":" << session->remote_port() << ", " << ec);
+            LOGI("rvz-server on accept " << session->remote_address() << ":" << session->remote_port() << " " << ec);
         });
 
         _rpcsServer.bind_connect([this](const SessionPtr& session)
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("rvz-server connect: " << session->remote_address() << ":" << session->remote_port() << ", " << ec);
+            LOGI("rvz-server on connect " << session->remote_address() << ":" << session->remote_port() << " " << ec);
 
             Client client{};
             client._session = session;
@@ -68,7 +89,7 @@ namespace rendezvous
         _rpcsServer.bind_disconnect([this](const SessionPtr& session)
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("rvz-server disconnect: " << session->remote_address() << ":" << session->remote_port() << ", " << ec);
+            LOGI("rvz-server on disconnect " << session->remote_address() << ":" << session->remote_port() << " " << ec);
 
             {
                 auto& idx = _clients.get<ClientBySession>();
@@ -77,7 +98,7 @@ namespace rendezvous
                 {
                     Client prev = *iter;
                     idx.erase(iter);
-                    if(prev._gateId != common::GateId{})
+                    if(prev._gateId)
                         distributeGateList();
                 }
             }
@@ -85,21 +106,32 @@ namespace rendezvous
                 auto& idx = _socks5s.get<Socks5ByEntrySession>();
                 auto range = idx.equal_range(session);
                 for(auto iter : range)
-                    iter._gateSession->async_call("socks5-close", iter._id);
+                {
+                    iter._gateSession->async_call([session=iter._gateSession, id=iter._id]
+                    {
+                        asio::error_code ec = asio2::get_last_error();
+                        LOGI("rvz-server call socks5-close " << session->remote_address() << ":" << session->remote_port() << " " << id << " " << ec);
+                    }, "socks5-close", iter._id);
+                }
                 idx.erase(range.first, range.second);
             }
             {
                 auto& idx = _socks5s.get<Socks5ByGateSession>();
                 auto range = idx.equal_range(session);
                 for(auto iter : range)
-                    iter._entrySession->async_call("socks5-close", iter._id);
+                    iter._entrySession->async_call([session=iter._entrySession, id=iter._id]
+                    {
+                        asio::error_code ec = asio2::get_last_error();
+                        LOGI("rvz-server call socks5-close " << session->remote_address() << ":" << session->remote_port() << " " << id << " " << ec);
+                    }, "socks5-close", iter._id);
                 idx.erase(range.first, range.second);
             }
         });
 
         _rpcsServer.bind("gate-intro", [this](const SessionPtr& session, common::GateId gateId)
         {
-            LOGI("rvz-server gate-intro: " << session->remote_address() << ":" << session->remote_port() << ", " << gateId);
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server on gate-intro: " << session->remote_address() << ":" << session->remote_port() << " " << gateId << " " << ec);
 
             auto& idx = _clients.get<ClientBySession>();
             auto iter = idx.find(session);
@@ -116,7 +148,8 @@ namespace rendezvous
 
         _rpcsServer.bind("entry-intro", [this](const SessionPtr& session, common::EntryId entryId)
         {
-            LOGI("rvz-server entry-intro: " << session->remote_address() << ":" << session->remote_port() << ", " << entryId);
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server on entry-intro: " << session->remote_address() << ":" << session->remote_port() << " " << entryId << " " << ec);
 
             auto& idx = _clients.get<ClientBySession>();
             auto iter = idx.find(session);
@@ -127,12 +160,15 @@ namespace rendezvous
                     idx.modify(iter, [&](Client& next){ next._entryId = entryId; });
             }
 
-            if(entryId != common::EntryId{})
+            if(entryId)
                 distributeGateList(session);
         });
 
-        _rpcsServer.bind("entry-socks5-open", [this](const SessionPtr& session, common::GateId gateId)
+        _rpcsServer.bind("entry-socks5-open", [this](const SessionPtr& entrySession, common::GateId gateId)
         {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server on entry-socks5-open: " << entrySession->remote_address() << ":" << entrySession->remote_port() << " " << gateId << " " << ec);
+
             auto& idx = _clients.get<ClientByGateId>();
             auto iter = idx.find(gateId);
             if(idx.end() == iter)
@@ -141,86 +177,129 @@ namespace rendezvous
             ++_socks5IdGen._value;
             common::Socks5Id socks5Id{_socks5IdGen};
 
-            _socks5s.emplace(Socks5{session, iter->_session, socks5Id});
+            SessionPtr gateSession = iter->_session;
+            _socks5s.emplace(Socks5{entrySession, gateSession, socks5Id});
 
-            iter->_session->async_call([this, session, socks5Id]
+            gateSession->async_call([this, entrySession, gateSession, socks5Id]
             {
                 asio::error_code ec = asio2::get_last_error();
+                LOGI("rvz-server call socks5-open: " << gateSession->remote_address() << ":" << gateSession->remote_port() << " " << socks5Id << " " << ec);
                 if(ec)
                 {
                     _socks5s.get<Socks5ById>().erase(socks5Id);
-                    if(session->is_started())
-                        session->async_call("socks5-close", socks5Id);
+                    if(entrySession->is_started())
+                    {
+                        entrySession->async_call([entrySession, socks5Id]
+                        {
+                            asio::error_code ec = asio2::get_last_error();
+                            LOGI("rvz-server call socks5-close: " << entrySession->remote_address() << ":" << entrySession->remote_port() << " " << socks5Id << " " << ec);
+                        }, "socks5-close", socks5Id);
+                    }
                 }
             }, "socks5-open", socks5Id);
 
             return socks5Id;
         });
 
-        _rpcsServer.bind("entry-socks5-close", [this](const SessionPtr& session, common::Socks5Id socks5Id)
+        _rpcsServer.bind("entry-socks5-close", [this](const SessionPtr& entrySession, common::Socks5Id socks5Id)
         {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server on entry-socks5-close: " << entrySession->remote_address() << ":" << entrySession->remote_port() << " " << socks5Id << " " << ec);
+
             auto& idx = _socks5s.get<Socks5ById>();
             auto iter = idx.find(socks5Id);
             if(idx.end() == iter)
                 return;
 
-            if(iter->_entrySession != session)
+            if(iter->_entrySession != entrySession)
             {
                 LOGW("entry-socks5-close with non-associated socks5");
                 return;
             }
 
+            SessionPtr gateSession = iter->_gateSession;
             _socks5s.get<Socks5ById>().erase(socks5Id);
-            iter->_gateSession->async_call("socks5-close", socks5Id);
+            gateSession->async_call([gateSession, socks5Id]
+            {
+                asio::error_code ec = asio2::get_last_error();
+                LOGI("rvz-server call socks5-close: " << gateSession->remote_address() << ":" << gateSession->remote_port() << " " << socks5Id << " " << ec);
+            }, "socks5-close", socks5Id);
         });
 
-        _rpcsServer.bind("entry-socks5-traf", [&](const SessionPtr& session, common::Socks5Id socks5Id, std::string data)
+        _rpcsServer.bind("entry-socks5-traf", [&](const SessionPtr& entrySession, common::Socks5Id socks5Id, std::string data)
         {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server on entry-socks5-traf: " << entrySession->remote_address() << ":" << entrySession->remote_port() << " " << socks5Id << " " << data.size() << " bytes " << ec);
+
             auto& idx = _socks5s.get<Socks5ById>();
             auto iter = idx.find(socks5Id);
             if(idx.end() == iter)
                 return;
 
-            if(iter->_entrySession != session)
+            if(iter->_entrySession != entrySession)
             {
                 LOGW("entry-socks5-traf with non-associated socks5");
                 return;
             }
 
-            iter->_gateSession->async_call("socks5-traf", socks5Id, std::move(data));
+            std::size_t dataSize = data.size();
+            SessionPtr gateSession = iter->_gateSession;
+            gateSession->async_call([gateSession, socks5Id, dataSize]
+            {
+                asio::error_code ec = asio2::get_last_error();
+                LOGI("rvz-server call socks5-traf: " << gateSession->remote_address() << ":" << gateSession->remote_port() << " " << socks5Id << " " << dataSize << " bytes " << ec);
+            }, "socks5-traf", socks5Id, std::move(data));
         });
 
-        _rpcsServer.bind("gate-socks5-close", [&](const SessionPtr& session, common::Socks5Id socks5Id)
+        _rpcsServer.bind("gate-socks5-close", [&](const SessionPtr& gateSession, common::Socks5Id socks5Id)
         {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server on gate-socks5-close: " << gateSession->remote_address() << ":" << gateSession->remote_port() << " " << socks5Id << " " << ec);
+
             auto& idx = _socks5s.get<Socks5ById>();
             auto iter = idx.find(socks5Id);
             if(idx.end() == iter)
                 return;
 
-            if(iter->_entrySession != session)
+            if(iter->_gateSession != gateSession)
             {
                 LOGW("gate-socks5-close with non-associated socks5");
                 return;
             }
 
+            SessionPtr entrySession = iter->_entrySession;
             _socks5s.get<Socks5ById>().erase(socks5Id);
-            iter->_entrySession->async_call("socks5-close", socks5Id);
+            entrySession->async_call([entrySession, socks5Id]
+            {
+                asio::error_code ec = asio2::get_last_error();
+                LOGI("rvz-server call socks5-close: " << entrySession->remote_address() << ":" << entrySession->remote_port() << " " << socks5Id << " " << ec);
+            }, "socks5-close", socks5Id);
+
         });
 
-        _rpcsServer.bind("gate-socks5-traf", [&](const SessionPtr& session, common::Socks5Id socks5Id, std::string data)
+        _rpcsServer.bind("gate-socks5-traf", [&](const SessionPtr& gateSession, common::Socks5Id socks5Id, std::string data)
         {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server on gate-socks5-traf: " << gateSession->remote_address() << ":" << gateSession->remote_port() << " " << socks5Id << " " << data.size() << " bytes " << ec);
+
             auto& idx = _socks5s.get<Socks5ById>();
             auto iter = idx.find(socks5Id);
             if(idx.end() == iter)
                 return;
 
-            if(iter->_entrySession != session)
+            if(iter->_gateSession != gateSession)
             {
                 LOGW("gate-socks5-traf with non-associated socks5");
                 return;
             }
 
-            iter->_entrySession->async_call("socks5-traf", socks5Id, std::move(data));
+            std::size_t dataSize = data.size();
+            SessionPtr entrySession = iter->_entrySession;
+            entrySession->async_call([entrySession, socks5Id, dataSize]
+            {
+                asio::error_code ec = asio2::get_last_error();
+                LOGI("rvz-server call socks5-traf: " << entrySession->remote_address() << ":" << entrySession->remote_port() << " " << socks5Id << " " << dataSize << " bytes " << ec);
+            }, "socks5-traf", socks5Id, std::move(data));
         });
     }
 
@@ -249,16 +328,25 @@ namespace rendezvous
     {
         std::vector<common::GateId> gateIds;
         for(auto iter=_clients.begin(); iter!=_clients.end(); ++iter)
-            if(iter->_gateId != common::GateId{})
+            if(iter->_gateId)
                 gateIds.emplace_back(iter->_gateId);
 
         for(auto iter=_clients.begin(); iter!=_clients.end(); ++iter)
         {
+            if(!iter->_entryId)
+                continue;
+
             if(target && target!=iter->_session)
                 continue;
 
             if(iter->_session->is_started())
-                iter->_session->async_call("gate-list", gateIds);
+            {
+                iter->_session->async_call([entrySession=iter->_session, gateIds]
+                {
+                    asio::error_code ec = asio2::get_last_error();
+                    LOGI("rvz-server call gate-list: " << entrySession->remote_address() << ":" << entrySession->remote_port() << " " << gateIds << " " << ec);
+                }, "gate-list", gateIds);
+            }
         }
     }
 }

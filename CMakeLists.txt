@@ -88,8 +88,6 @@ qt_add_executable(gate
     src/gate/rvzClient.cpp
     src/gate/socks5/server.hpp
     src/gate/socks5/server.cpp
-    src/gate/socks5/session.hpp
-    src/gate/socks5/session.cpp
 )
 set_target_properties(gate PROPERTIES AUTOMOC On)
 qt_add_qml_module(gate

@@ -47,13 +47,19 @@ namespace logger
 
         Stream& operator<<(const std::error_code& ec)
         {
-            _buf << ec.message() << " (" << ec.category().name() << '.' << ec.value() << ')';
+            if(ec)
+                _buf << '[' << ec.message() << ", " << ec.category().name() << '.' << ec.value() << ']';
+            else
+                _buf << "[ok]";
             return *this;
         }
 
         Stream& operator<<(const std::error_condition& ec)
         {
-            _buf << ec.message() << " (" << ec.category().name() << '.' << ec.value() << ')';
+            if(ec)
+                _buf << '[' << ec.message() << ", " << ec.category().name() << '.' << ec.value() << ']';
+            else
+                _buf << "[ok]";
             return *this;
         }
 

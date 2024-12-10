@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
         fs::path executablePath = fs::canonical(argv[0], ec);
         if(ec)
         {
-            LOGE("unable to determine current directory: "<<ec);
+            LOGE("unable to determine current directory " << ec);
             return EXIT_FAILURE;
         }
 
@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
         fs::current_path(executableDir, ec);
         if(ec)
         {
-            LOGE("unable to set current directory to "<<executableDir<<": "<<ec);
+            LOGE("unable to set current directory to " << executableDir << " " << ec);
             return EXIT_FAILURE;
         }
     }
@@ -139,9 +139,7 @@ int main(int argc, char* argv[])
     signalset.add(SIGTERM);
     signalset.async_wait([&](const asio::error_code& ec, int signo)
     {
-        if (ec)
-            return;
-        LOGI("SIG"<<sigabbrev_np(signo)<<": "<<ec);
+        LOGI("SIG" << sigabbrev_np(signo) << " " << ec);
         app.quit();
     });
 

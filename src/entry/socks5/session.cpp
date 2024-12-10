@@ -1,5 +1,6 @@
 #include "session.hpp"
 #include "../rvzClient.hpp"
+#include <logger.hpp>
 #include <cassert>
 
 namespace entry::socks5
@@ -59,6 +60,7 @@ namespace entry::socks5
             _rvzClient->socks5Output(_downstreamId, std::move(_output.front()));
             _output.pop_front();
         }
+
         _rvzClient->socks5Output(_downstreamId, std::string{data});
     }
 
@@ -77,7 +79,7 @@ namespace entry::socks5
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Session::downstreamLogickTick()
     {
-        if(!_rvzClient || _gateId == common::GateId{})
+        if(!_rvzClient || !_gateId)
         {
             _downStreamState = {};
             _downstreamId = {};
@@ -98,7 +100,12 @@ namespace entry::socks5
 
                     _rvzClient->subscribeOnSocks5Input(_downstreamId, [this](std::string data)
                     {
-                        async_send(std::move(data));
+                        std::size_t dataSize = data.size();
+                        async_send(std::move(data), [this, dataSize]
+                        {
+                            asio::error_code ec = asio2::get_last_error();
+                            LOGI("tcp-to-socks5 session send " << this->remote_address() << ":" << this->remote_port() << " " << dataSize << " bytes " << ec);
+                        });
                     });
 
                     _rvzClient->subscribeOnSocks5Closed(_downstreamId, [this]
@@ -132,5 +139,4 @@ namespace entry::socks5
     {
         return DownstreamState::work == _downStreamState && _downstreamId != common::Socks5Id{};
     }
-
 }

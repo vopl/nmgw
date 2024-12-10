@@ -11,6 +11,16 @@ namespace common
     {
         std::uint64_t _value{};
 
+        explicit operator bool() const
+        {
+            return !!_value;
+        }
+
+        bool operator!() const
+        {
+            return !operator bool();
+        }
+
         friend auto operator<=>(const Socks5Id&, const Socks5Id&) = default;
         friend bool operator==(const Socks5Id&, const Socks5Id&) = default;
 
@@ -31,6 +41,16 @@ namespace common
     {
         std::string _value{};
 
+        explicit operator bool() const
+        {
+            return !_value.empty();
+        }
+
+        bool operator!() const
+        {
+            return !operator bool();
+        }
+
         friend auto operator<=>(const EntryId&, const EntryId&) = default;
         friend bool operator==(const EntryId&, const EntryId&) = default;
 
@@ -50,6 +70,16 @@ namespace common
     struct GateId
     {
         std::string _value{};
+
+        explicit operator bool() const
+        {
+            return !_value.empty();
+        }
+
+        bool operator!() const
+        {
+            return !operator bool();
+        }
 
         friend auto operator<=>(const GateId&, const GateId&) = default;
         friend bool operator==(const GateId&, const GateId&) = default;
