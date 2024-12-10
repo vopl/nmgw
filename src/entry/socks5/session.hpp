@@ -25,7 +25,7 @@ namespace entry::socks5
 
         void setRvzClient(RvzClient* rvzClient);
         void setGateId(const common::GateId& gateId);
-        void processOutput(std::string_view data);
+        void processOutput(std::string_view data = {});
         void processClose();
 
     private:

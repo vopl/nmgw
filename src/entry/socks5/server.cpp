@@ -24,13 +24,13 @@ namespace entry::socks5
         bind_accept([this](const std::shared_ptr<Session>& session)
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("tcp-to-socks5 session on accept " << session->remote_address() << ":" << session->remote_port() << " " << ec);
+            LOGI("tcp-to-socks5 session " << session->remote_address() << ":" << session->remote_port() << " on accept " << ec);
         });
 
         bind_connect([this](const std::shared_ptr<Session>& session)
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("tcp-to-socks5 session on connect " << session->remote_address() << ":" << session->remote_port() << " " << ec);
+            LOGI("tcp-to-socks5 session " << session->remote_address() << ":" << session->remote_port() << " on connect " << session->remote_address() << ":" << session->remote_port() << " " << ec);
             assert(_rvzClient);
             session->setRvzClient(_rvzClient);
             session->setGateId(_gateId);
@@ -39,14 +39,14 @@ namespace entry::socks5
         bind_disconnect([this](const std::shared_ptr<Session>& session)
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("tcp-to-socks5 session on disconnect " << session->remote_address() << ":" << session->remote_port() << " " << ec);
+            LOGI("tcp-to-socks5 session " << session->remote_address() << ":" << session->remote_port() << " on disconnect " << session->remote_address() << ":" << session->remote_port() << " " << ec);
             session->processClose();
         });
 
         bind_recv([this](const std::shared_ptr<Session>& session, std::string_view data)
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("tcp-to-socks5 session on recv " << session->remote_address() << ":" << session->remote_port() << data.size() << " bytes " << ec);
+            LOGI("tcp-to-socks5 session " << session->remote_address() << ":" << session->remote_port() << " on recv " << session->remote_address() << ":" << session->remote_port() << " " << data.size() << " bytes " << ec);
             session->processOutput(data);
         });
     }
@@ -62,7 +62,7 @@ namespace entry::socks5
     {
         assert(!_rvzClient);
         _rvzClient = rvzClient;
-        this->sessions().for_each([&](const SessionPtr& session)
+        sessions().for_each([&](const SessionPtr& session)
         {
             session->setRvzClient(_rvzClient);
         });
@@ -72,7 +72,7 @@ namespace entry::socks5
     void Server::setGateId(const common::GateId& gateId)
     {
         _gateId = gateId;
-        this->sessions().for_each([&](const SessionPtr& session)
+        sessions().for_each([&](const SessionPtr& session)
         {
             session->setGateId(_gateId);
         });

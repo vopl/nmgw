@@ -139,6 +139,8 @@ int main(int argc, char* argv[])
     signalset.add(SIGTERM);
     signalset.async_wait([&](const asio::error_code& ec, int signo)
     {
+        if (ec)
+            return;
         LOGI("SIG" << sigabbrev_np(signo) << " " << ec);
         app.quit();
     });

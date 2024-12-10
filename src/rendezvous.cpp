@@ -41,6 +41,8 @@ int main(int argc, char* argv[])
     signalset.add(SIGTERM);
     signalset.async_wait([sigPromise = std::move(sigPromise)](const asio::error_code& ec, int signo) mutable
     {
+        if (ec)
+            return;
         LOGI("SIG"<<sigabbrev_np(signo)<<": "<<ec);
         sigPromise.set_value();
     });

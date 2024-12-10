@@ -6,6 +6,7 @@ namespace gate::socks5
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Server::Server()
+        : _implServer{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *utils::asio2Worker()}
     {
     }
 
@@ -18,25 +19,66 @@ namespace gate::socks5
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::start()
     {
+        _implServer.bind_accept([](const std::shared_ptr<asio2::socks5_session>& session)
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("socks5 server on accept " << ec);
+
+            asio2::socks5::options opts;
+            opts.set_methods(asio2::socks5::method::anonymous);
+            session->set_socks5_options(std::move(opts));
+        });
+
+        _implServer.bind_connect([](const std::shared_ptr<asio2::socks5_session>& /*session*/)
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("socks5 server on connect " << ec);
+
+        });
+
+        _implServer.bind_disconnect([](const std::shared_ptr<asio2::socks5_session>& /*session*/)
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("socks5 server on disconnect " << ec);
+
+        });
+
+        _implServer.bind_socks5_handshake([](const std::shared_ptr<asio2::socks5_session>& /*session*/)
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("socks5 server on handshake " << ec);
+        });
+
+        _implServer.bind_start([]()
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("socks5 server on start " << ec);
+        });
+
+        _implServer.bind_stop([]()
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("socks5 server on stop " << ec);
+        });
+
         _implServer.start("127.9.9.19", 17052);
-        asio::error_code ec = asio2::get_last_error();
-        LOGI("socks5 server start " << ec);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::stop()
     {
-        for(auto& [socks5Id, session] : _implSessions)
+        _implServer.post([this]
         {
+            auto implSessions = std::move(_implSessions);
+            for(auto& [socks5Id, session] : implSessions)
+            {
+                if(session->is_started())
+                    session->stop();
+            }
 
-        }
-        _implSessions.clear();
-        if(_implServer.is_started())
-        {
-            _implServer.stop();
-            asio::error_code ec = asio2::get_last_error();
-            LOGI("socks5 server stop " << ec);
-        }
+            if(_implServer.is_started())
+                _implServer.stop();
+        });
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -44,9 +86,10 @@ namespace gate::socks5
     {
         auto [iter, inserted] = _implSessions.emplace(
                                     socks5Id,
-                                    std::make_shared<Session>());
+                                    std::make_shared<Session>(asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *utils::asio2Worker()));
         assert(inserted);
         SessionPtr session = iter->second;
+        session->set_auto_reconnect(false);
 
         auto onClose = [socks5Id, this]
         {

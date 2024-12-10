@@ -51,7 +51,8 @@ namespace entry::socks5
     {
         if(!downstreamWorks())
         {
-            _output.emplace_back(data);
+            if(!data.empty())
+                _output.emplace_back(data);
             return;
         }
 
@@ -61,7 +62,8 @@ namespace entry::socks5
             _output.pop_front();
         }
 
-        _rvzClient->socks5Output(_downstreamId, std::string{data});
+        if(!data.empty())
+            _rvzClient->socks5Output(_downstreamId, std::string{data});
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -83,35 +85,41 @@ namespace entry::socks5
         {
             _downStreamState = {};
             _downstreamId = {};
-            _output = {};
             return;
         }
 
         switch(_downStreamState)
         {
         case DownstreamState::null:
-            _rvzClient->socks5Open(_gateId, [this](common::Socks5Id downstreamId)
+            _rvzClient->socks5Open(_gateId, [this, holder = shared_from_this()](common::Socks5Id downstreamId)
             {
-                _output = {};
                 _downstreamId = downstreamId;
                 if(downstreamId != common::Socks5Id{})
                 {
                     _downStreamState = DownstreamState::work;
 
-                    _rvzClient->subscribeOnSocks5Input(_downstreamId, [this](std::string data)
+                    _rvzClient->subscribeOnSocks5Input(_downstreamId, [this, holder = shared_from_this()](std::string data)
                     {
+                        if(!is_started())
+                            return;
+
                         std::size_t dataSize = data.size();
                         async_send(std::move(data), [this, dataSize]
                         {
                             asio::error_code ec = asio2::get_last_error();
-                            LOGI("tcp-to-socks5 session send " << this->remote_address() << ":" << this->remote_port() << " " << dataSize << " bytes " << ec);
+                            LOGI("tcp-to-socks5 session " << remote_address() << ":" << remote_port() << " send " << dataSize << " bytes " << ec);
                         });
                     });
 
-                    _rvzClient->subscribeOnSocks5Closed(_downstreamId, [this]
+                    _rvzClient->subscribeOnSocks5Closed(_downstreamId, [this, holder = shared_from_this()]
                     {
+                        if(!is_started())
+                            return;
+
                         stop();
                     });
+
+                    processOutput();
                 }
                 else
                 {

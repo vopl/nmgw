@@ -19,14 +19,6 @@ namespace entry::socks5
         void start();
         void stop();
 
-        // SessionPtr open();
-        // SessionPtr get(Session::key_type sessionId);
-        // bool output(Session::key_type sessionId, std::string data);
-        // void close(Session::key_type sessionId);
-
-        // void onInput(std::function<void(common::Socks5Id, std::string)>);
-        // void onClosed(std::function<void(common::Socks5Id)>);
-
     private:
         RvzClient*      _rvzClient{};
         common::GateId  _gateId;
