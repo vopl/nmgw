@@ -6,7 +6,7 @@ namespace gate::socks5
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Server::Server()
-        : _implServer{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *utils::asio2Worker()}
+        : _implServer{utils::initBufferSize, utils::maxBufferSize, *utils::asio2Worker()}
     {
     }
 
@@ -69,11 +69,11 @@ namespace gate::socks5
     {
         _implServer.post([this]
         {
-            auto implSessions = std::move(_implSessions);
-            for(auto& [socks5Id, session] : implSessions)
+            auto implClients = std::move(_implClients);
+            for(auto& [socks5Id, client] : implClients)
             {
-                if(session->is_started())
-                    session->stop();
+                if(client->is_started())
+                    client->stop();
             }
 
             if(_implServer.is_started())
@@ -84,26 +84,26 @@ namespace gate::socks5
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::open(common::Socks5Id socks5Id)
     {
-        auto [iter, inserted] = _implSessions.emplace(
+        auto [iter, inserted] = _implClients.emplace(
                                     socks5Id,
-                                    std::make_shared<Session>(asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *utils::asio2Worker()));
+                                    std::make_shared<Client>(utils::initBufferSize, utils::maxBufferSize, *utils::asio2Worker()));
         assert(inserted);
-        SessionPtr session = iter->second;
-        session->set_auto_reconnect(false);
+        ClientPtr client = iter->second;
+        client->set_auto_reconnect(false);
 
         auto onClose = [socks5Id, this]
         {
-            if(_implSessions.erase(socks5Id))
+            if(_implClients.erase(socks5Id))
             {
                 for(const auto& onClosed: _onClosed)
                     onClosed(socks5Id);
             }
         };
 
-        session->bind_connect([socks5Id, this, session, onClose]()
+        client->bind_connect([socks5Id, this, client, onClose]()
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("socks5 session " << socks5Id << " on connect " << ec);
+            LOGI("socks5 client " << socks5Id << " on connect " << ec);
 
             if(ec)
             {
@@ -111,10 +111,10 @@ namespace gate::socks5
                 return;
             }
 
-            session->bind_recv([socks5Id, this, onClose](std::string_view data)
+            client->bind_recv([socks5Id, this, onClose](std::string_view data)
             {
                 asio::error_code ec = asio2::get_last_error();
-                LOGI("socks5 session " << socks5Id << " on recv " << data.size() << " bytes " << ec);
+                LOGI("socks5 client " << socks5Id << " on recv " << data.size() << " bytes " << ec);
 
                 if(ec)
                     return;
@@ -124,28 +124,28 @@ namespace gate::socks5
             });
         });
 
-        session->bind_disconnect([socks5Id, this, session, onClose]()
+        client->bind_disconnect([socks5Id, this, client, onClose]()
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("socks5 session " << socks5Id << " on disconnect " << ec);
+            LOGI("socks5 client " << socks5Id << " on disconnect " << ec);
             onClose();
         });
 
-        session->async_start("127.9.9.19", 17052);
+        client->async_start("127.9.9.19", 17052);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     bool Server::output(common::Socks5Id socks5Id, std::string data)
     {
-        auto iter = _implSessions.find(socks5Id);
-        if(_implSessions.end() == iter)
+        auto iter = _implClients.find(socks5Id);
+        if(_implClients.end() == iter)
             return false;
 
         std::size_t dataSize = data.size();
         iter->second->async_send(std::move(data), [socks5Id, dataSize]
         {
             asio::error_code ec = asio2::get_last_error();
-            LOGI("socks5 session " << socks5Id << " sent " << dataSize << " bytes " << ec);
+            LOGI("socks5 client " << socks5Id << " sent " << dataSize << " bytes " << ec);
         });
         return true;
     }
@@ -153,15 +153,15 @@ namespace gate::socks5
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::close(common::Socks5Id socks5Id)
     {
-        auto iter = _implSessions.find(socks5Id);
-        if(_implSessions.end() == iter)
+        auto iter = _implClients.find(socks5Id);
+        if(_implClients.end() == iter)
             return;
 
-        SessionPtr session = iter->second;
-        _implSessions.erase(iter);
+        ClientPtr client = iter->second;
+        _implClients.erase(iter);
 
-        if(session->is_started())
-            session->stop();
+        if(client->is_started())
+            client->stop();
 
         for(const auto& onClosed: _onClosed)
             onClosed(socks5Id);

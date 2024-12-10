@@ -7,7 +7,7 @@ namespace gate
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     RvzClient::RvzClient()
-        : _rpcsClient{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *utils::asio2Worker()}
+        : _rpcsClient{utils::initBufferSize, utils::maxBufferSize, *utils::asio2Worker()}
     {
         _rpcsClient.set_default_timeout(std::chrono::seconds(5));
 

@@ -43,7 +43,7 @@ namespace rendezvous
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Server::Server()
-        : _rpcsServer{asio2::detail::tcp_frame_size, asio2::detail::max_buffer_size, *utils::asio2Worker()}
+        : _rpcsServer{utils::initBufferSize, utils::maxBufferSize, *utils::asio2Worker()}
     {
         _rpcsServer.set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
         _rpcsServer.set_cert_buffer(
