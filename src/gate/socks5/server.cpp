@@ -36,9 +36,9 @@ namespace gate::socks5
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     SessionPtr Server::open(common::Socks5Id socks5Id)
     {
-        auto [iter, inserted] = _implSessions.emplace(std::piecewise_construct_t{},
-                                                     std::tuple{socks5Id},
-                                                     std::tuple{});
+        auto [iter, inserted] = _implSessions.emplace(
+                                    socks5Id,
+                                    std::make_shared<Session>());
         assert(inserted);
         SessionPtr session = iter->second;
 
@@ -61,6 +61,7 @@ namespace gate::socks5
 
             session->bind_recv([socks5Id, this, processOnClose](std::string_view data)
             {
+                LOGD("recv " << data.size());
                 if(asio::error_code ec = asio2::get_last_error())
                 {
                     LOGE("socks5 tcp client read: " << ec);
@@ -92,6 +93,7 @@ namespace gate::socks5
         if(_implSessions.end() == iter)
             return false;
 
+        LOGD("send " << data.size());
         iter->second->async_send(std::move(data));
         return true;
     }

@@ -164,16 +164,14 @@ namespace gate
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::socks5Output(common::Socks5Id, std::string)
+    void RvzClient::socks5Output(common::Socks5Id sock5Id, std::string data)
     {
-        assert(!"not impl");
-        // client.send("write id data")
+        _rpcsClient.async_call("gate-socks5-traf", sock5Id, std::move(data));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void RvzClient::socks5Close(common::Socks5Id)
+    void RvzClient::socks5Close(common::Socks5Id sock5Id)
     {
-        assert(!"not impl");
-        // client.send("closed id")
+        _rpcsClient.async_call("gate-socks5-close", sock5Id);
     }
 }
