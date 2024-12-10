@@ -64,6 +64,18 @@ namespace entry
                     LOGI("rvz-client call entry-intro " << entryId << " " << ec);
                 }, "entry-intro", _entryId);
             }
+
+            _rpcsClient.start_timer("ping", std::chrono::seconds{60}, [this]
+            {
+                if(!_rpcsClient.is_started())
+                    return;
+
+                _rpcsClient.async_call([]
+                {
+                    asio::error_code ec = asio2::get_last_error();
+                    LOGI("rvz-client call ping" << " " << ec);
+                }, "ping");
+            });
         });
 
         _rpcsClient.bind_disconnect([this]
@@ -72,6 +84,12 @@ namespace entry
             LOGI("rvz-client on disconnect " << ec);
             for(const auto& cb: _onDisconnect)
                 cb(ec);
+        });
+
+        _rpcsClient.bind("pong", []
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-client on pong " << " " << ec);
         });
 
         _rpcsClient.bind("gate-list", [this](std::vector<common::GateId> gateIds)

@@ -128,6 +128,18 @@ namespace rendezvous
             }
         });
 
+        _rpcsServer.bind("ping", [this](const SessionPtr& session)
+        {
+            asio::error_code ec = asio2::get_last_error();
+            LOGI("rvz-server on ping: " << session->remote_address() << ":" << session->remote_port() << " " << ec);
+
+            session->async_call([session]
+            {
+                asio::error_code ec = asio2::get_last_error();
+                LOGI("rvz-server call pong " << session->remote_address() << ":" << session->remote_port() << " " << ec);
+            }, "pong");
+        });
+
         _rpcsServer.bind("gate-intro", [this](const SessionPtr& session, common::GateId gateId)
         {
             asio::error_code ec = asio2::get_last_error();
