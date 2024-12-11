@@ -19,31 +19,35 @@ namespace gate::socks5
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::start()
     {
-        _implServer.bind_accept([](const std::shared_ptr<asio2::socks5_session>& session)
+        _implServer.bind_accept([](const ImplSessionPtr& session)
         {
             asio::error_code ec = asio2::get_last_error();
             LOGI("socks5 server on accept " << ec);
 
-            asio2::socks5::options opts;
-            opts.set_methods(asio2::socks5::method::anonymous);
-            session->set_socks5_options(std::move(opts));
+            if(!ec)
+            {
+                utils::setupTimeouts(session);
+
+                asio2::socks5::options opts;
+                opts.set_methods(asio2::socks5::method::anonymous);
+                session->set_socks5_options(std::move(opts));
+            }
         });
 
-        _implServer.bind_connect([](const std::shared_ptr<asio2::socks5_session>& /*session*/)
+        _implServer.bind_connect([](const ImplSessionPtr& session)
         {
             asio::error_code ec = asio2::get_last_error();
             LOGI("socks5 server on connect " << ec);
-
         });
 
-        _implServer.bind_disconnect([](const std::shared_ptr<asio2::socks5_session>& /*session*/)
+        _implServer.bind_disconnect([](const ImplSessionPtr& /*session*/)
         {
             asio::error_code ec = asio2::get_last_error();
             LOGI("socks5 server on disconnect " << ec);
 
         });
 
-        _implServer.bind_socks5_handshake([](const std::shared_ptr<asio2::socks5_session>& /*session*/)
+        _implServer.bind_socks5_handshake([](const ImplSessionPtr& /*session*/)
         {
             asio::error_code ec = asio2::get_last_error();
             LOGI("socks5 server on handshake " << ec);
@@ -86,10 +90,10 @@ namespace gate::socks5
     {
         auto [iter, inserted] = _implClients.emplace(
                                     socks5Id,
-                                    std::make_shared<Client>(utils::initBufferSize, utils::maxBufferSize, *utils::asio2Worker()));
+                                    std::make_shared<ImplClient>(utils::initBufferSize, utils::maxBufferSize, *utils::asio2Worker()));
         assert(inserted);
-        ClientPtr client = iter->second;
-        client->set_auto_reconnect(false);
+        ImplClientPtr client = iter->second;
+        utils::setupTimeouts(client);
 
         auto onClose = [socks5Id, this]
         {
@@ -157,11 +161,11 @@ namespace gate::socks5
         if(_implClients.end() == iter)
             return;
 
-        ClientPtr client = iter->second;
+        ImplClientPtr implClient = iter->second;
         _implClients.erase(iter);
 
-        if(client->is_started())
-            client->stop();
+        if(implClient->is_started())
+            implClient->stop();
 
         for(const auto& onClosed: _onClosed)
             onClosed(socks5Id);

@@ -8,8 +8,8 @@ namespace gate::socks5
 {
     class Server
     {
-        using Client = asio2::socks5_tcp_client;
-        using ClientPtr = std::shared_ptr<Client>;
+        using ImplClient = asio2::socks5_tcp_client;
+        using ImplClientPtr = std::shared_ptr<ImplClient>;
 
     public:
         Server();
@@ -26,8 +26,16 @@ namespace gate::socks5
         void subscribeOnClosed(std::function<void(common::Socks5Id)>);
 
     private:
-        asio2::socks5_server                    _implServer;
-        std::map<common::Socks5Id, ClientPtr>   _implClients;
+        struct ImplSession : asio2::socks5_session_t<ImplSession>
+        {
+            using socks5_session_t::socks5_session_t;
+            using socks5_session_t::back_client_;
+        };
+        using ImplSessionPtr = std::shared_ptr<ImplSession>;
+        using ImplServer = asio2::socks5_server_t<ImplSession>;
+
+        ImplServer                                  _implServer;
+        std::map<common::Socks5Id, ImplClientPtr>   _implClients;
 
         std::vector<std::function<void(common::Socks5Id, std::string)>>  _onInput;
         std::vector<std::function<void(common::Socks5Id)>>               _onClosed;

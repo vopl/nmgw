@@ -9,7 +9,7 @@ namespace gate
     RvzClient::RvzClient()
         : _rpcsClient{utils::initBufferSize, utils::maxBufferSize, *utils::asio2Worker()}
     {
-        _rpcsClient.set_default_timeout(std::chrono::seconds(5));
+        utils::setupTimeouts(_rpcsClient);
 
         _rpcsClient.set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
         _rpcsClient.set_cert_buffer(

@@ -25,6 +25,9 @@ namespace entry::socks5
         {
             asio::error_code ec = asio2::get_last_error();
             LOGI("tcp-to-socks5 session " << session->remote_address() << ":" << session->remote_port() << " on accept " << ec);
+
+            if(!ec)
+                utils::setupTimeouts(session);
         });
 
         bind_connect([this](const std::shared_ptr<Session>& session)
