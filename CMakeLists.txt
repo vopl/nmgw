@@ -21,6 +21,28 @@ set_target_properties(asio2 PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(asio2 SYSTEM BEFORE INTERFACE asio2/3rd asio2/include)
 target_compile_definitions(asio2 INTERFACE -DASIO2_USE_SSL=1)
 
+if (ANDROID)
+    function(add_openssl_libraries)
+        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+            set(ssl_root_path ${CMAKE_ANDROID_NDK}/../../android_openssl/no-asm)
+        else()
+            set(ssl_root_path ${CMAKE_ANDROID_NDK}/../../android_openssl)
+        endif()
+
+        target_include_directories(${ARGN} PRIVATE ${ssl_root_path}/ssl_3/include)
+        target_link_libraries(${ARGN} PRIVATE
+            ${ssl_root_path}/ssl_3/${CMAKE_ANDROID_ARCH_ABI}/libcrypto_3.so
+            ${ssl_root_path}/ssl_3/${CMAKE_ANDROID_ARCH_ABI}/libssl_3.so)
+    endfunction()
+
+    target_include_directories(asio2 SYSTEM INTERFACE boost-include)
+else()
+    function(add_openssl_libraries)
+        target_link_libraries(${ARGN} PRIVATE -lssl -lcrypto)
+    endfunction()
+
+endif()
+
 ########################################################################################
 find_package(Qt6 6.2 COMPONENTS Core Quick REQUIRED)
 qt_policy(SET QTP0004 NEW)
@@ -61,7 +83,8 @@ qt_add_qml_module(entry
         etc/client.pswd
         etc/dh2048.pem
 )
-target_link_libraries(entry PRIVATE logger asio2 -lssl -lcrypto Qt6::Quick)
+target_link_libraries(entry PRIVATE logger asio2 Qt6::Quick)
+add_openssl_libraries(entry)
 
 ########################################################################################
 add_executable(rendezvous
@@ -73,7 +96,8 @@ add_executable(rendezvous
     src/rendezvous/server.hpp
     src/rendezvous/server.cpp
 )
-target_link_libraries(rendezvous PRIVATE logger asio2 -lssl -lcrypto)
+target_link_libraries(rendezvous PRIVATE logger asio2)
+add_openssl_libraries(rendezvous)
 
 ########################################################################################
 qt_add_executable(gate
@@ -103,4 +127,5 @@ qt_add_qml_module(gate
         etc/client.pswd
         etc/dh2048.pem
 )
-target_link_libraries(gate PRIVATE logger asio2 -lssl -lcrypto Qt6::Quick)
+target_link_libraries(gate PRIVATE logger asio2 Qt6::Quick)
+add_openssl_libraries(gate)

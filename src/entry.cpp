@@ -129,7 +129,12 @@ int main(int argc, char* argv[])
     {
         if (ec)
             return;
-        LOGI("SIG"<<sigabbrev_np(signo)<<": "<<ec);
+#ifdef ANDROID
+        auto SIG = signo >= _NSIG ? "UNKNOWN" : sys_siglist[signo];
+#else
+        auto SIG = sigabbrev_np(signo);
+#endif
+        LOGI("SIG" << SIG << " " << ec);
         app.quit();
     });
 
@@ -146,7 +151,6 @@ int main(int argc, char* argv[])
     socks5Server.stop();
     asio::error_code ec;
     signalset.cancel(ec);
-
 
     utils::asio2Worker()->stop();
     LOGI("done");
