@@ -21,8 +21,9 @@ set_target_properties(asio2 PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(asio2 SYSTEM BEFORE INTERFACE asio2/3rd asio2/include)
 target_compile_definitions(asio2 INTERFACE -DASIO2_USE_SSL=1)
 
-if (ANDROID)
-    function(add_openssl_libraries)
+########################################################################################
+function(add_openssl_libraries)
+    if (ANDROID)
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             set(ssl_root_path ${CMAKE_ANDROID_NDK}/../../android_openssl/no-asm)
         else()
@@ -33,12 +34,30 @@ if (ANDROID)
         target_link_libraries(${ARGN} PRIVATE
             ${ssl_root_path}/ssl_3/${CMAKE_ANDROID_ARCH_ABI}/libcrypto_3.so
             ${ssl_root_path}/ssl_3/${CMAKE_ANDROID_ARCH_ABI}/libssl_3.so)
-    endfunction()
-else()
-    function(add_openssl_libraries)
+    else()
         target_link_libraries(${ARGN} PRIVATE -lssl -lcrypto)
-    endfunction()
-endif()
+    endif()
+endfunction()
+
+########################################################################################
+function(collect_bin target)
+    if (ANDROID)
+        if(NOT TARGET ${target}_make_apk)
+            return()
+        endif()
+        set(file "${target}.apk")
+        set(dstDir "${CMAKE_CURRENT_LIST_DIR}/bin")
+        get_target_property(srcDir ${target} BINARY_DIR)
+        set(srcDir "${srcDir}/android-build-${target}")
+        add_custom_target(${target}-collect_bin ALL
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${srcDir}/${file}" "${dstDir}/${file}"
+            DEPENDS "${srcDir}/${file}")
+    else()
+        add_custom_target(${target}-collect_bin ALL
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${target}> "${CMAKE_CURRENT_LIST_DIR}/bin"
+            DEPENDS ${target})
+    endif()
+endfunction()
 
 ########################################################################################
 find_package(Qt6 6.2 COMPONENTS Core Quick REQUIRED)
@@ -82,6 +101,7 @@ qt_add_qml_module(entry
 )
 target_link_libraries(entry PRIVATE logger asio2 Qt6::Quick)
 add_openssl_libraries(entry)
+collect_bin(entry)
 
 ########################################################################################
 if (NOT ANDROID)
@@ -96,6 +116,7 @@ if (NOT ANDROID)
     )
     target_link_libraries(rendezvous PRIVATE logger asio2)
     add_openssl_libraries(rendezvous)
+    collect_bin(rendezvous)
 endif()
 
 ########################################################################################
@@ -128,3 +149,5 @@ qt_add_qml_module(gate
 )
 target_link_libraries(gate PRIVATE logger asio2 Qt6::Quick)
 add_openssl_libraries(gate)
+collect_bin(gate)
+
