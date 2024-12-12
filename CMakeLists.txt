@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(nmgw)
+project(nmgw VERSION 0.0.0)
 
 set(CMAKE_CXX_STANDARD 23)
 
@@ -34,13 +34,10 @@ if (ANDROID)
             ${ssl_root_path}/ssl_3/${CMAKE_ANDROID_ARCH_ABI}/libcrypto_3.so
             ${ssl_root_path}/ssl_3/${CMAKE_ANDROID_ARCH_ABI}/libssl_3.so)
     endfunction()
-
-    target_include_directories(asio2 SYSTEM INTERFACE boost-include)
 else()
     function(add_openssl_libraries)
         target_link_libraries(${ARGN} PRIVATE -lssl -lcrypto)
     endfunction()
-
 endif()
 
 ########################################################################################
@@ -87,17 +84,19 @@ target_link_libraries(entry PRIVATE logger asio2 Qt6::Quick)
 add_openssl_libraries(entry)
 
 ########################################################################################
-add_executable(rendezvous
-    src/utils.hpp
-    src/utils.cpp
-    src/common.hpp
-    src/common.cpp
-    src/rendezvous.cpp
-    src/rendezvous/server.hpp
-    src/rendezvous/server.cpp
-)
-target_link_libraries(rendezvous PRIVATE logger asio2)
-add_openssl_libraries(rendezvous)
+if (NOT ANDROID)
+    add_executable(rendezvous
+        src/utils.hpp
+        src/utils.cpp
+        src/common.hpp
+        src/common.cpp
+        src/rendezvous.cpp
+        src/rendezvous/server.hpp
+        src/rendezvous/server.cpp
+    )
+    target_link_libraries(rendezvous PRIVATE logger asio2)
+    add_openssl_libraries(rendezvous)
+endif()
 
 ########################################################################################
 qt_add_executable(gate
