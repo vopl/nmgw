@@ -9,6 +9,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE_UC)
 add_compile_definitions(-DBUILD_TYPE_${BUILD_TYPE_UC}=1)
+list(APPEND CMAKE_BUILD_RPATH "\$ORIGIN" "\$ORIGIN/../lib")
 
 ########################################################################################
 file(GLOB_RECURSE ASIO2_HEADERS
@@ -114,7 +115,7 @@ if (NOT ANDROID)
         src/rendezvous/server.hpp
         src/rendezvous/server.cpp
     )
-    target_link_libraries(rendezvous PRIVATE logger asio2)
+    target_link_libraries(rendezvous PRIVATE logger asio2 pthread)
     add_openssl_libraries(rendezvous)
     collect_bin(rendezvous)
 endif()
