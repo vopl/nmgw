@@ -28,3 +28,8 @@ ANDROID_AVD_HOME=/home/vopl/.config/.android/avd ./emulator -avd android-phone-x
 
 /home/vopl/Android-qtc/Sdk/platform-tools/adb install android-build-gate-debug.apk
 /home/vopl/Android-qtc/Sdk/platform-tools/adb shell am start -n org.qtproject.example.entry/org.qtproject.qt.android.bindings.QtActivity
+
+qt 6.4.3
+android 7
+    ndk 24
+    platform 26

@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
         settings.setValue("entryId", QString::fromLocal8Bit(value));
     }
     if(settings.value("rendezvousHost").isNull())
-        settings.setValue("rendezvousHost", "127.0.0.1");
+        settings.setValue("rendezvousHost", "185.185.40.120");
     if(settings.value("rendezvousPort").isNull())
         settings.setValue("rendezvousPort", "28938");
 

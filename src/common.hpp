@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <ostream>
+#include <compare>
 
 namespace common
 {

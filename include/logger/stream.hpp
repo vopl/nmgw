@@ -40,7 +40,7 @@ namespace logger
         ~Stream()
         {
             _buf << '\n';
-            std::string_view str{_buf.view()};
+            std::string str{_buf.str()};
             _out.write(str.data(), str.size());
             _out.flush();
         }

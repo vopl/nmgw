@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(nmgw VERSION 0.0.0)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
@@ -23,7 +23,7 @@ target_include_directories(asio2 SYSTEM BEFORE INTERFACE asio2/3rd asio2/include
 target_compile_definitions(asio2 INTERFACE -DASIO2_USE_SSL=1)
 
 ########################################################################################
-function(add_openssl_libraries)
+function(add_openssl_libraries target)
     if (ANDROID)
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             set(ssl_root_path ${CMAKE_ANDROID_NDK}/../../android_openssl/no-asm)
@@ -31,12 +31,18 @@ function(add_openssl_libraries)
             set(ssl_root_path ${CMAKE_ANDROID_NDK}/../../android_openssl)
         endif()
 
-        target_include_directories(${ARGN} PRIVATE ${ssl_root_path}/ssl_3/include)
-        target_link_libraries(${ARGN} PRIVATE
-            ${ssl_root_path}/ssl_3/${CMAKE_ANDROID_ARCH_ABI}/libcrypto_3.so
-            ${ssl_root_path}/ssl_3/${CMAKE_ANDROID_ARCH_ABI}/libssl_3.so)
+        set(ssl_include_path ${ssl_root_path}/ssl_3/include)
+        set(ssl_lib_path ${ssl_root_path}/ssl_3/${CMAKE_ANDROID_ARCH_ABI})
+        set(ssl_lib
+            ${ssl_lib_path}/libcrypto_3.so
+            ${ssl_lib_path}/libssl_3.so)
+
+        target_include_directories(${target} PRIVATE ${ssl_include_path})
+        target_link_libraries(${target} PRIVATE ${ssl_lib})
+
+        set_target_properties(${target} PROPERTIES QT_ANDROID_EXTRA_LIBS "${ssl_lib}")
     else()
-        target_link_libraries(${ARGN} PRIVATE -lssl -lcrypto)
+        target_link_libraries(${target} PRIVATE -lssl -lcrypto)
     endif()
 endfunction()
 
@@ -46,7 +52,7 @@ function(collect_bin target)
         set(file "${target}.apk")
         set(dstDir "${CMAKE_CURRENT_LIST_DIR}/bin")
         get_target_property(srcDir ${target} BINARY_DIR)
-        set(srcDir "${srcDir}/android-build-${target}")
+        set(srcDir "${srcDir}/android-build")
         add_custom_target(${target}-collect_bin ALL
             COMMAND ${CMAKE_COMMAND} -E copy_if_different "${srcDir}/${file}" "${dstDir}/${file}"
             DEPENDS "${srcDir}/${file}")
@@ -58,8 +64,8 @@ function(collect_bin target)
 endfunction()
 
 ########################################################################################
-find_package(Qt6 6.2 COMPONENTS Core Quick REQUIRED)
-qt_policy(SET QTP0004 NEW)
+find_package(Qt6 6.4 COMPONENTS Core Quick REQUIRED)
+# qt_policy(SET QTP0004 NEW)
 
 ########################################################################################
 include_directories(include)
@@ -83,7 +89,11 @@ qt_add_executable(entry
     src/entry/socks5/session.hpp
     src/entry/socks5/session.cpp
 )
-set_target_properties(entry PROPERTIES AUTOMOC On)
+set_target_properties(entry PROPERTIES
+    AUTOMOC On
+    QT_ANDROID_MIN_SDK_VERSION 26
+    QT_ANDROID_TARGET_SDK_VERSION 26
+)
 qt_add_qml_module(entry
     URI entry
     VERSION 1.0
@@ -131,7 +141,11 @@ qt_add_executable(gate
     src/gate/socks5/server.hpp
     src/gate/socks5/server.cpp
 )
-set_target_properties(gate PROPERTIES AUTOMOC On)
+set_target_properties(gate PROPERTIES
+    AUTOMOC On
+    QT_ANDROID_MIN_SDK_VERSION 26
+    QT_ANDROID_TARGET_SDK_VERSION 26
+)
 qt_add_qml_module(gate
     URI gate
     VERSION 1.0

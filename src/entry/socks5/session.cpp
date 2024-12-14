@@ -138,7 +138,8 @@ namespace entry::socks5
             start_timer(_reopenTimerId, std::chrono::seconds{1}, 1, [this]{ downstreamLogickTick();});
             break;
         default:
-            std::unreachable();
+            //std::unreachable();
+            std::abort();
         }
     }
 
