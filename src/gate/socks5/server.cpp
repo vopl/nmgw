@@ -172,6 +172,13 @@ namespace gate::socks5
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Server::closeAll()
+    {
+        while(!_implClients.empty())
+            close(_implClients.begin()->first);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Server::subscribeOnInput(std::function<void(common::Socks5Id, std::string)> cb)
     {
         _onInput.emplace_back(std::move(cb));

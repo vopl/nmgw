@@ -21,6 +21,7 @@ namespace gate::socks5
         void open(common::Socks5Id socks5Id);
         bool output(common::Socks5Id socks5Id, std::string data);
         void close(common::Socks5Id socks5Id);
+        void closeAll();
 
         void subscribeOnInput(std::function<void(common::Socks5Id, std::string)>);
         void subscribeOnClosed(std::function<void(common::Socks5Id)>);

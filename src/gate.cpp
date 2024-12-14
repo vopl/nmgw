@@ -90,18 +90,17 @@ int main(int argc, char* argv[])
     {
         if (ec)
         {
-            socks5Server.stop();
+            socks5Server.closeAll();
             QMetaObject::invokeMethod(&guiTalk, [&, txt=QString::fromLocal8Bit(ec.message())]{guiTalk.setRendezvousConnectivity(txt);});
             return;
         }
 
-        socks5Server.start();
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("ok");});
     });
 
     rvzClient.subscribeOnDisconnect([&](asio::error_code /*ec*/)
     {
-        socks5Server.stop();
+        socks5Server.closeAll();
         QMetaObject::invokeMethod(&guiTalk, [&]{guiTalk.setRendezvousConnectivity("none");});
     });
 
@@ -131,6 +130,7 @@ int main(int argc, char* argv[])
         rvzClient.socks5Close(socks5Id);
     });
 
+    socks5Server.start();
     rvzClient.start();
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
