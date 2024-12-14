@@ -94,7 +94,7 @@ namespace entry::socks5
             _rvzClient->socks5Open(_gateId, [this, holder = shared_from_this()](common::Socks5Id downstreamId)
             {
                 _downstreamId = downstreamId;
-                if(downstreamId != common::Socks5Id{})
+                if(downstreamId)
                 {
                     _downStreamState = DownstreamState::work;
 
