@@ -49,13 +49,13 @@ endfunction()
 ########################################################################################
 function(collect_bin target)
     if (ANDROID)
-        set(file "${target}.apk")
-        set(dstDir "${CMAKE_CURRENT_LIST_DIR}/bin")
-        get_target_property(srcDir ${target} BINARY_DIR)
-        set(srcDir "${srcDir}/android-build")
-        add_custom_target(${target}-collect_bin ALL
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${srcDir}/${file}" "${dstDir}/${file}"
-            DEPENDS "${srcDir}/${file}")
+        # set(file "${target}.apk")
+        # set(dstDir "${CMAKE_CURRENT_LIST_DIR}/bin")
+        # get_target_property(srcDir ${target} BINARY_DIR)
+        # set(srcDir "${srcDir}/android-build")
+        # add_custom_target(${target}-collect_bin ALL
+        #     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${srcDir}/${file}" "${dstDir}/${file}"
+        #     DEPENDS "${srcDir}/${file}")
     else()
         add_custom_target(${target}-collect_bin ALL
             COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${target}> "${CMAKE_CURRENT_LIST_DIR}/bin"
@@ -91,8 +91,8 @@ qt_add_executable(entry
 )
 set_target_properties(entry PROPERTIES
     AUTOMOC On
-    QT_ANDROID_MIN_SDK_VERSION 26
-    QT_ANDROID_TARGET_SDK_VERSION 26
+    QT_ANDROID_MIN_SDK_VERSION 24
+    QT_ANDROID_TARGET_SDK_VERSION 28
 )
 qt_add_qml_module(entry
     URI entry
@@ -143,8 +143,8 @@ qt_add_executable(gate
 )
 set_target_properties(gate PROPERTIES
     AUTOMOC On
-    QT_ANDROID_MIN_SDK_VERSION 26
-    QT_ANDROID_TARGET_SDK_VERSION 26
+    QT_ANDROID_MIN_SDK_VERSION 24
+    QT_ANDROID_TARGET_SDK_VERSION 28
 )
 qt_add_qml_module(gate
     URI gate
