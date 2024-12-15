@@ -2,7 +2,7 @@
 
 #include <asio2/proxy/socks5_server.hpp>
 #include <asio2/proxy/socks5_client.hpp>
-#include "../../common.hpp"
+#include <common.hpp>
 
 namespace gate::socks5
 {

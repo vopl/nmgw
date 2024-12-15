@@ -1,26 +1,9 @@
 #include "utils.hpp"
 #include <logger.hpp>
 #include <fstream>
-#ifdef QT_CORE_LIB
-#   include <QFile>
-#endif
 
 namespace utils
 {
-#ifdef QT_CORE_LIB
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    QByteArray qtReadAllFile(QString path)
-    {
-        QFile file{path};
-        if(!file.open(QFile::ReadOnly))
-        {
-            LOGE("unable to open for reading: " << path.toStdString() << " [" << file.errorString().toStdString() << "]");
-            return {};
-        }
-        return file.readAll();
-    }
-#endif
-
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     std::string readAllFile(const std::string& path)
     {

@@ -1,5 +1,5 @@
 #include "server.hpp"
-#include "../../utils.hpp"
+#include <utils.hpp>
 #include <logger.hpp>
 
 namespace gate::socks5

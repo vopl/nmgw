@@ -1,7 +1,7 @@
 #pragma once
 
 #include <asio2/tcp/tcp_session.hpp>
-#include "../../common.hpp"
+#include <common.hpp>
 
 namespace entry
 {

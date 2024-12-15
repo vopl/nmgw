@@ -3,14 +3,26 @@
 #ifdef QT_CORE_LIB
 #   include <QString>
 #   include <QByteArray>
+#   include <QFile>
+#   include <logger.hpp>
 #endif
 
 #include <asio2/base/iopool.hpp>
 
 namespace utils
 {
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 #ifdef QT_CORE_LIB
-    QByteArray qtReadAllFile(QString path);
+    inline QByteArray qtReadAllFile(QString path)
+    {
+        QFile file{path};
+        if(!file.open(QFile::ReadOnly))
+        {
+            LOGE("unable to open for reading: " << path.toStdString() << " [" << file.errorString().toStdString() << "]");
+            return {};
+        }
+        return file.readAll();
+    }
 #endif
 
     std::string readAllFile(const std::string& path);

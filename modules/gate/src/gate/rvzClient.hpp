@@ -1,7 +1,7 @@
 #pragma once
 
 #include <asio2/rpc/rpcs_client.hpp>
-#include "../common.hpp"
+#include <common.hpp>
 
 namespace gate
 {

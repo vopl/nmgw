@@ -1,6 +1,6 @@
 #include "server.hpp"
 #include "../rvzClient.hpp"
-#include "../../utils.hpp"
+#include <utils.hpp>
 #include <logger.hpp>
 
 namespace entry::socks5

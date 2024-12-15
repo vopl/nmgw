@@ -1,3 +1,3 @@
-[submodule "asio2"]
-	path = asio2
+[submodule "modules/asio2/repo"]
+	path = modules/asio2/repo
 	url = git@github.com:vopl/asio2.git
