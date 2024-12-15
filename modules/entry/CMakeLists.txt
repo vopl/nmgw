@@ -7,7 +7,7 @@ qt_add_executable(entry ${HDR} ${SRC})
 set_target_properties(entry PROPERTIES
     AUTOMOC On
     QT_ANDROID_MIN_SDK_VERSION 24
-    QT_ANDROID_TARGET_SDK_VERSION 28
+    QT_ANDROID_TARGET_SDK_VERSION 35
 )
 
 set_source_files_properties(${CMAKE_SOURCE_DIR}/etc/ca.crt PROPERTIES QT_RESOURCE_ALIAS etc/ca.crt)

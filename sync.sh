@@ -27,6 +27,10 @@ esac
 opts="-avr -ztu -h --info=progress2 -e 'ssh -p 36271'"
 
 if [[ "$do_outAndroid" == "yes" ]]; then
+    cmd="ssh -p 36271 nmgw@${host} mkdir -p /home/nmgw/binaries/$(date +%4Y-%m-%d)"
+    echo sync local to remote: $cmd
+    sh -c "$cmd"
+
     cmd="rsync $opts ./bin/{entry,gate}.apk nmgw@${host}:/home/nmgw/binaries/$(date +%4Y-%m-%d)/bin/"
     echo sync local to remote: $cmd
     sh -c "$cmd"
